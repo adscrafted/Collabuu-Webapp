@@ -1,0 +1,477 @@
+/**
+ * Content Submissions API Implementation Example
+ *
+ * This file provides example implementations for the content submissions
+ * API endpoints that need to be created on the backend.
+ *
+ * Adapt this code to match your backend framework and structure.
+ */
+
+import { Request, Response, NextFunction } from 'express';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+);
+
+// Type definitions
+interface ContentSubmission {
+  id: string;
+  campaignId: string;
+  influencerId: string;
+  influencerName: string;
+  influencerAvatar?: string;
+  influencerUsername?: string;
+  contentType: 'video' | 'image' | 'post';
+  platform: 'instagram' | 'youtube' | 'tiktok' | 'other';
+  contentUrl: string;
+  thumbnailUrl?: string;
+  caption?: string;
+  status: 'new' | 'viewed' | 'approved';
+  createdAt: string;
+  viewedAt?: string;
+}
+
+/**
+ * GET /api/business/campaigns/:campaignId/content-submissions
+ *
+ * Fetch all content submissions for a specific campaign.
+ * Only the business owner of the campaign can access this.
+ */
+export async function getContentSubmissions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { campaignId } = req.params;
+    const businessId = req.headers['x-business-id'] as string;
+    const userId = (req as any).user?.id; // From auth middleware
+
+    if (!businessId || !userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Business ID and user authentication required',
+      });
+    }
+
+    // Verify the campaign belongs to this business
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('id, business_id')
+      .eq('id', campaignId)
+      .eq('business_id', businessId)
+      .single();
+
+    if (campaignError || !campaign) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Campaign not found or access denied',
+      });
+    }
+
+    // Fetch content submissions with influencer details
+    const { data: submissions, error: submissionsError } = await supabase
+      .from('content_submissions')
+      .select(`
+        id,
+        campaign_id,
+        influencer_id,
+        influencer_name,
+        influencer_avatar,
+        influencer_username,
+        content_type,
+        platform,
+        content_url,
+        thumbnail_url,
+        caption,
+        status,
+        created_at,
+        viewed_at
+      `)
+      .eq('campaign_id', campaignId)
+      .order('created_at', { ascending: false });
+
+    if (submissionsError) {
+      console.error('Error fetching submissions:', submissionsError);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Failed to fetch content submissions',
+      });
+    }
+
+    // Transform snake_case to camelCase for frontend
+    const transformedSubmissions = submissions.map((sub) => ({
+      id: sub.id,
+      campaignId: sub.campaign_id,
+      influencerId: sub.influencer_id,
+      influencerName: sub.influencer_name,
+      influencerAvatar: sub.influencer_avatar,
+      influencerUsername: sub.influencer_username,
+      contentType: sub.content_type,
+      platform: sub.platform,
+      contentUrl: sub.content_url,
+      thumbnailUrl: sub.thumbnail_url,
+      caption: sub.caption,
+      status: sub.status,
+      createdAt: sub.created_at,
+      viewedAt: sub.viewed_at,
+    }));
+
+    return res.status(200).json({
+      data: transformedSubmissions,
+    });
+  } catch (error) {
+    console.error('Error in getContentSubmissions:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+  }
+}
+
+/**
+ * PATCH /api/business/campaigns/:campaignId/content-submissions/:contentId/view
+ *
+ * Mark a content submission as viewed by the business.
+ */
+export async function markContentAsViewed(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { campaignId, contentId } = req.params;
+    const businessId = req.headers['x-business-id'] as string;
+    const userId = (req as any).user?.id; // From auth middleware
+
+    if (!businessId || !userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Business ID and user authentication required',
+      });
+    }
+
+    // Verify the campaign belongs to this business
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('id, business_id')
+      .eq('id', campaignId)
+      .eq('business_id', businessId)
+      .single();
+
+    if (campaignError || !campaign) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Campaign not found or access denied',
+      });
+    }
+
+    // Update the content submission status
+    const { data: updatedSubmission, error: updateError } = await supabase
+      .from('content_submissions')
+      .update({
+        status: 'viewed',
+        viewed_at: new Date().toISOString(),
+      })
+      .eq('id', contentId)
+      .eq('campaign_id', campaignId)
+      .select()
+      .single();
+
+    if (updateError || !updatedSubmission) {
+      console.error('Error updating submission:', updateError);
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Content submission not found',
+      });
+    }
+
+    // Transform snake_case to camelCase for frontend
+    const transformedSubmission = {
+      id: updatedSubmission.id,
+      campaignId: updatedSubmission.campaign_id,
+      influencerId: updatedSubmission.influencer_id,
+      influencerName: updatedSubmission.influencer_name,
+      influencerAvatar: updatedSubmission.influencer_avatar,
+      influencerUsername: updatedSubmission.influencer_username,
+      contentType: updatedSubmission.content_type,
+      platform: updatedSubmission.platform,
+      contentUrl: updatedSubmission.content_url,
+      thumbnailUrl: updatedSubmission.thumbnail_url,
+      caption: updatedSubmission.caption,
+      status: updatedSubmission.status,
+      createdAt: updatedSubmission.created_at,
+      viewedAt: updatedSubmission.viewed_at,
+    };
+
+    // Optional: Send notification to influencer that their content was viewed
+    // await sendNotification(updatedSubmission.influencer_id, {
+    //   type: 'content_viewed',
+    //   message: 'Your content submission has been viewed by the business',
+    //   contentId: contentId,
+    // });
+
+    return res.status(200).json({
+      data: transformedSubmission,
+    });
+  } catch (error) {
+    console.error('Error in markContentAsViewed:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+  }
+}
+
+/**
+ * POST /api/business/campaigns/:campaignId/content-submissions/:contentId/approve
+ *
+ * Approve a content submission (optional endpoint for future use).
+ */
+export async function approveContentSubmission(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { campaignId, contentId } = req.params;
+    const businessId = req.headers['x-business-id'] as string;
+    const userId = (req as any).user?.id;
+
+    if (!businessId || !userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Business ID and user authentication required',
+      });
+    }
+
+    // Verify campaign ownership
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('id, business_id')
+      .eq('id', campaignId)
+      .eq('business_id', businessId)
+      .single();
+
+    if (campaignError || !campaign) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Campaign not found or access denied',
+      });
+    }
+
+    // Update content status to approved
+    const { data: updatedSubmission, error: updateError } = await supabase
+      .from('content_submissions')
+      .update({
+        status: 'approved',
+        viewed_at: new Date().toISOString(), // Also mark as viewed
+      })
+      .eq('id', contentId)
+      .eq('campaign_id', campaignId)
+      .select()
+      .single();
+
+    if (updateError || !updatedSubmission) {
+      console.error('Error approving submission:', updateError);
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Content submission not found',
+      });
+    }
+
+    // Transform response
+    const transformedSubmission = {
+      id: updatedSubmission.id,
+      campaignId: updatedSubmission.campaign_id,
+      influencerId: updatedSubmission.influencer_id,
+      influencerName: updatedSubmission.influencer_name,
+      influencerAvatar: updatedSubmission.influencer_avatar,
+      influencerUsername: updatedSubmission.influencer_username,
+      contentType: updatedSubmission.content_type,
+      platform: updatedSubmission.platform,
+      contentUrl: updatedSubmission.content_url,
+      thumbnailUrl: updatedSubmission.thumbnail_url,
+      caption: updatedSubmission.caption,
+      status: updatedSubmission.status,
+      createdAt: updatedSubmission.created_at,
+      viewedAt: updatedSubmission.viewed_at,
+    };
+
+    // Optional: Send notification to influencer
+    // await sendNotification(updatedSubmission.influencer_id, {
+    //   type: 'content_approved',
+    //   message: 'Your content submission has been approved!',
+    //   contentId: contentId,
+    // });
+
+    return res.status(200).json({
+      data: transformedSubmission,
+    });
+  } catch (error) {
+    console.error('Error in approveContentSubmission:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+  }
+}
+
+/**
+ * GET /api/business/campaigns/:campaignId/content-submissions/stats
+ *
+ * Get statistics about content submissions for a campaign.
+ */
+export async function getContentSubmissionStats(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { campaignId } = req.params;
+    const businessId = req.headers['x-business-id'] as string;
+    const userId = (req as any).user?.id;
+
+    if (!businessId || !userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Business ID and user authentication required',
+      });
+    }
+
+    // Verify campaign ownership
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('id, business_id')
+      .eq('id', campaignId)
+      .eq('business_id', businessId)
+      .single();
+
+    if (campaignError || !campaign) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Campaign not found or access denied',
+      });
+    }
+
+    // Get total count
+    const { count: totalCount } = await supabase
+      .from('content_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId);
+
+    // Get new count
+    const { count: newCount } = await supabase
+      .from('content_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId)
+      .eq('status', 'new');
+
+    // Get viewed count
+    const { count: viewedCount } = await supabase
+      .from('content_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId)
+      .eq('status', 'viewed');
+
+    // Get approved count
+    const { count: approvedCount } = await supabase
+      .from('content_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId)
+      .eq('status', 'approved');
+
+    // Get platform breakdown
+    const { data: platformStats } = await supabase
+      .from('content_submissions')
+      .select('platform')
+      .eq('campaign_id', campaignId);
+
+    const platformBreakdown = platformStats?.reduce((acc: any, curr: any) => {
+      acc[curr.platform] = (acc[curr.platform] || 0) + 1;
+      return acc;
+    }, {});
+
+    return res.status(200).json({
+      data: {
+        total: totalCount || 0,
+        new: newCount || 0,
+        viewed: viewedCount || 0,
+        approved: approvedCount || 0,
+        byPlatform: platformBreakdown || {},
+      },
+    });
+  } catch (error) {
+    console.error('Error in getContentSubmissionStats:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+  }
+}
+
+/**
+ * Example Express.js route registration:
+ *
+ * import express from 'express';
+ * import { authenticateUser } from './middleware/auth';
+ *
+ * const router = express.Router();
+ *
+ * // Apply authentication middleware
+ * router.use(authenticateUser);
+ *
+ * // Content submission routes
+ * router.get(
+ *   '/campaigns/:campaignId/content-submissions',
+ *   getContentSubmissions
+ * );
+ *
+ * router.patch(
+ *   '/campaigns/:campaignId/content-submissions/:contentId/view',
+ *   markContentAsViewed
+ * );
+ *
+ * router.post(
+ *   '/campaigns/:campaignId/content-submissions/:contentId/approve',
+ *   approveContentSubmission
+ * );
+ *
+ * router.get(
+ *   '/campaigns/:campaignId/content-submissions/stats',
+ *   getContentSubmissionStats
+ * );
+ *
+ * export default router;
+ */
+
+/**
+ * Example Next.js API Route (app/api/business/campaigns/[id]/content-submissions/route.ts):
+ *
+ * import { NextRequest, NextResponse } from 'next/server';
+ * import { getContentSubmissions } from './handler';
+ *
+ * export async function GET(
+ *   request: NextRequest,
+ *   { params }: { params: { id: string } }
+ * ) {
+ *   const mockReq = {
+ *     params: { campaignId: params.id },
+ *     headers: {
+ *       'x-business-id': request.headers.get('x-business-id'),
+ *     },
+ *     user: { id: 'user-id-from-auth' },
+ *   };
+ *
+ *   const mockRes = {
+ *     status: (code: number) => ({
+ *       json: (data: any) => NextResponse.json(data, { status: code }),
+ *     }),
+ *   };
+ *
+ *   return await getContentSubmissions(mockReq as any, mockRes as any, () => {});
+ * }
+ */

@@ -1,0 +1,307 @@
+{
+  "unusedTypes": [
+    {
+      "name": "ColorName",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 111,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "GrayShade",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 112,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "PinkShade",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 113,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "BlueShade",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 114,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "AmberShade",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 115,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "GreenShade",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 116,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "RedShade",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/colors.ts",
+      "line": 117,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "DesignSystem",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/index.ts",
+      "line": 37,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "BorderRadius",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/spacing.ts",
+      "line": 99,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "BoxShadow",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/spacing.ts",
+      "line": 100,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "ZIndex",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/spacing.ts",
+      "line": 102,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "TransitionDuration",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/spacing.ts",
+      "line": 103,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "TransitionTimingFunction",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/spacing.ts",
+      "line": 104,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "BorderWidth",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/spacing.ts",
+      "line": 105,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "FontWeight",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/typography.ts",
+      "line": 75,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "LineHeight",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/typography.ts",
+      "line": 76,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "LetterSpacing",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/typography.ts",
+      "line": 77,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "FontSizeConfig",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/constants/typography.ts",
+      "line": 80,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "LoginRequest",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 16,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "RegisterRequest",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 22,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "RefreshTokenRequest",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 31,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "ForgotPasswordRequest",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 35,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "ResetPasswordRequest",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 39,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "RefreshTokenResponse",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 60,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "AuthError",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 67,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "TokenPayload",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts",
+      "line": 76,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "RemoveTeamMemberRequest",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/profile.ts",
+      "line": 88,
+      "kind": "interface",
+      "usage": 0
+    },
+    {
+      "name": "BusinessType",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/profile.ts",
+      "line": 222,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "PERMISSION_DISPLAY_NAMES",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/profile.ts",
+      "line": 294,
+      "kind": "const",
+      "usage": 0
+    },
+    {
+      "name": "PERMISSION_DESCRIPTIONS",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/profile.ts",
+      "line": 302,
+      "kind": "const",
+      "usage": 0
+    },
+    {
+      "name": "CampaignTypeFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/campaign-schema.ts",
+      "line": 153,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "BasicInfoFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/campaign-schema.ts",
+      "line": 154,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "CampaignDetailsFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/campaign-schema.ts",
+      "line": 155,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "ReviewFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/campaign-schema.ts",
+      "line": 156,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "UpdateTeamMemberFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/profile-schema.ts",
+      "line": 64,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "AutoRechargeSettingsFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/profile-schema.ts",
+      "line": 145,
+      "kind": "type",
+      "usage": 0
+    },
+    {
+      "name": "TaxInformationFormData",
+      "file": "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/profile-schema.ts",
+      "line": 162,
+      "kind": "type",
+      "usage": 0
+    }
+  ],
+  "unusedEnumValues": [],
+  "duplicateTypes": [
+    {
+      "name": "LoginResponse",
+      "files": [
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/hooks/use-login.ts",
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts"
+      ]
+    },
+    {
+      "name": "RegisterResponse",
+      "files": [
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/hooks/use-register.ts",
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts"
+      ]
+    },
+    {
+      "name": "User",
+      "files": [
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/stores/auth-store.ts",
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts"
+      ]
+    },
+    {
+      "name": "AuthState",
+      "files": [
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/stores/auth-store.ts",
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/auth.ts"
+      ]
+    },
+    {
+      "name": "CampaignFormData",
+      "files": [
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/types/campaign.ts",
+        "/Users/anthony/Documents/Projects/Collabuu-Webapp/lib/validation/campaign-schema.ts"
+      ]
+    }
+  ],
+  "summary": {
+    "totalTypes": 128,
+    "unusedTypes": 37,
+    "unusedEnumValues": 0,
+    "duplicates": 5
+  }
+}
