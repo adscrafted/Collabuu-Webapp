@@ -132,7 +132,7 @@ export function InviteTeamMemberModal({
                         <div className="flex flex-col items-start">
                           <span className="font-medium">Editor</span>
                           <span className="text-xs text-gray-500">
-                            Create and edit campaigns, view analytics
+                            Create and edit campaigns
                           </span>
                         </div>
                       </SelectItem>

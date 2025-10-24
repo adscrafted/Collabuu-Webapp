@@ -14,10 +14,10 @@ const buttonVariants = cva(
         destructive:
           "bg-red-500 text-white shadow-sm hover:bg-red-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm",
         outline:
-          "border border-gray-300 bg-white shadow-sm hover:bg-gray-100 hover:border-gray-400 active:bg-gray-200",
+          "border-2 border-gray-400 bg-white text-gray-900 shadow-sm hover:bg-gray-50 hover:border-gray-500 active:bg-gray-100 active:border-gray-600",
         secondary:
-          "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 active:bg-gray-300",
-        ghost: "hover:bg-gray-100 active:bg-gray-200",
+          "border-2 border-gray-400 bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 hover:border-gray-500 active:bg-gray-300 active:border-gray-600",
+        ghost: "border border-gray-300 hover:bg-gray-100 hover:border-gray-400 active:bg-gray-200 active:border-gray-500",
         link: "text-pink-500 underline-offset-4 hover:text-pink-600 hover:underline",
         business: "bg-blue-500 text-white shadow-sm hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm",
         influencer: "bg-amber-500 text-white shadow-sm hover:bg-amber-600 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm",

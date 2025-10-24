@@ -117,23 +117,18 @@ export default function NewCampaignPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 py-8">
       {/* Header with Breadcrumb */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Breadcrumb
-            items={[
-              { label: 'Campaigns', href: '/campaigns' },
-              { label: 'New Campaign' },
-            ]}
-            className="mb-3"
-          />
-          <h1 className="text-3xl font-bold text-gray-900">Create Campaign</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Launch your campaign in just a few simple steps
-          </p>
-        </div>
-        <Button variant="ghost" onClick={handleCancel}>
-          Cancel
-        </Button>
+      <div>
+        <Breadcrumb
+          items={[
+            { label: 'Campaigns', href: '/campaigns' },
+            { label: 'New Campaign' },
+          ]}
+          className="mb-3"
+        />
+        <h1 className="text-3xl font-bold text-gray-900">Create Campaign</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Launch your campaign in just a few simple steps
+        </p>
       </div>
 
       {/* Stepper */}
@@ -204,7 +199,7 @@ export default function NewCampaignPage() {
           {currentStep === 3 && <ReviewStep form={form} onEditStep={handleEditStep} />}
 
           {/* Navigation Buttons */}
-          <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
+          <div className="mt-8 flex items-center justify-between pt-6">
             <div className="flex gap-3">
               {currentStep > 0 && (
                 <Button
@@ -220,6 +215,15 @@ export default function NewCampaignPage() {
             </div>
 
             <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isLoading}
+                className="border-2 border-gray-400 hover:border-gray-500"
+              >
+                Cancel
+              </Button>
               {currentStep < STEPS.length - 1 ? (
                 <Button type="button" onClick={handleNext} disabled={isLoading}>
                   Next

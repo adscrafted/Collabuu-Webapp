@@ -109,8 +109,8 @@ export function BillingTab() {
 
               {pkg.discount && pkg.discount > 0 && (
                 <div className={cn(
-                  "absolute -top-2",
-                  pkg.recommended ? "-right-2" : "right-4"
+                  "absolute",
+                  pkg.recommended ? "-top-3 -right-3" : "-top-2 right-4"
                 )}>
                   <Badge className="bg-green-500 hover:bg-green-600 text-white font-semibold px-2.5 py-0.5">
                     Save {pkg.discount}%
@@ -121,8 +121,8 @@ export function BillingTab() {
               <div className="flex-1 space-y-4">
                 {/* Credits */}
                 <div className="py-4 border-b">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-gray-900">
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-3xl font-bold text-gray-900 tabular-nums">
                       {pkg.credits.toLocaleString()}
                     </span>
                     <span className="text-gray-500">credits</span>
@@ -130,14 +130,14 @@ export function BillingTab() {
                 </div>
 
                 {/* Price */}
-                <div>
+                <div className="text-center">
                   {pkg.discount && pkg.discount > 0 && (
                     <p className="text-sm text-gray-400 line-through mb-1">
                       ${pkg.credits.toLocaleString()}
                     </p>
                   )}
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-gray-900">
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-2xl font-bold text-gray-900 tabular-nums">
                       ${Math.floor(pkg.price).toLocaleString()}
                     </span>
                   </div>

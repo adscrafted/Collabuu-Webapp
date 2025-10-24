@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Video, Filter, Download, Eye, CheckCircle } from 'lucide-react';
+import { Video, Filter, Eye, CheckCircle } from 'lucide-react';
 import {
   useContentSubmissions,
   useMarkContentViewed,
@@ -108,15 +108,6 @@ export function ContentTab({ campaignId }: ContentTabProps) {
     }
   };
 
-  // WEB-ONLY FEATURE: Export Content to CSV
-  // iOS does not have export functionality - web-exclusive data export feature
-  const handleExport = () => {
-    // In a real app, this would export to CSV
-    toast({
-      title: 'Export Started',
-      description: 'Content list is being downloaded',
-    });
-  };
 
   // Filter submissions
   const filteredSubmissions = submissions
@@ -264,17 +255,6 @@ export function ContentTab({ campaignId }: ContentTabProps) {
                   Approve All Viewed ({viewedCount})
                 </Button>
               )}
-
-              {/* WEB-ONLY FEATURE: Export Button */}
-              {/* iOS does not have export functionality */}
-              <Button
-                variant="outline"
-                onClick={handleExport}
-                className="shadow-sm hover:shadow transition-shadow"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
             </div>
           </div>
         </CardHeader>

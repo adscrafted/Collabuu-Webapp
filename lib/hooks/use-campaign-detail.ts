@@ -6,7 +6,6 @@ import type {
   InfluencerApplication,
   CampaignParticipant,
   Visit,
-  CampaignActivity,
   UpdateCampaignRequest,
   AcceptApplicationRequest,
   RejectApplicationRequest,
@@ -24,7 +23,6 @@ export const campaignKeys = {
   applications: (id: string) => [...campaignKeys.all, 'applications', id] as const,
   participants: (id: string) => [...campaignKeys.all, 'participants', id] as const,
   visits: (id: string) => [...campaignKeys.all, 'visits', id] as const,
-  activity: (id: string) => [...campaignKeys.all, 'activity', id] as const,
   contentSubmissions: (id: string) => [...campaignKeys.all, 'content-submissions', id] as const,
 };
 
@@ -77,23 +75,25 @@ export function useCampaignParticipants(id: string) {
       );
 
       // Transform the response to ensure customer/visit counts are available
-      return response.data.map((participant: any) => ({
-        id: participant.id,
-        campaignId: participant.campaign_id || participant.campaignId || id,
-        userId: participant.user_id || participant.userId || participant.influencer_id || participant.influencerId,
-        influencerName: participant.influencer_name || participant.influencerName || 'Unknown',
-        influencerAvatar: participant.influencer_avatar || participant.influencerAvatar,
-        followerCount: participant.follower_count || participant.followerCount || 0,
-        joinedAt: participant.joined_at || participant.joinedAt || participant.created_at || participant.createdAt,
-        visitsGenerated: participant.visits_generated || participant.visitsGenerated || participant.visit_count || participant.visitCount || 0,
-        conversions: participant.conversions || 0,
-        creditsEarned: participant.credits_earned || participant.creditsEarned || 0,
-        conversionRate: participant.conversion_rate || participant.conversionRate || 0,
-        lastActivityAt: participant.last_activity_at || participant.lastActivityAt,
-        // New fields for customer/visit tracking
-        visitCount: participant.visit_count || participant.visitCount || participant.visits_generated || participant.visitsGenerated || 0,
-        customerCount: participant.customer_count || participant.customerCount || participant.unique_customers || participant.uniqueCustomers,
-      })) as CampaignParticipant[];
+      // Filter out participants without valid influencer data
+      return response.data
+        .filter((participant: any) => participant.influencer_name || participant.influencerName)
+        .map((participant: any) => ({
+          id: participant.id,
+          campaignId: participant.campaign_id || participant.campaignId || id,
+          userId: participant.user_id || participant.userId || participant.influencer_id || participant.influencerId,
+          influencerName: participant.influencer_name || participant.influencerName,
+          influencerAvatar: participant.influencer_avatar || participant.influencerAvatar,
+          followerCount: participant.follower_count || participant.followerCount || 0,
+          joinedAt: participant.joined_at || participant.joinedAt || participant.created_at || participant.createdAt,
+          visitsGenerated: participant.visits_generated || participant.visitsGenerated || participant.visit_count || participant.visitCount || 0,
+          conversions: participant.conversions || 0,
+          creditsEarned: participant.credits_earned || participant.creditsEarned || 0,
+          lastActivityAt: participant.last_activity_at || participant.lastActivityAt,
+          // New fields for customer/visit tracking
+          visitCount: participant.visit_count || participant.visitCount || participant.visits_generated || participant.visitsGenerated || 0,
+          customerCount: participant.customer_count || participant.customerCount || participant.unique_customers || participant.uniqueCustomers,
+        })) as CampaignParticipant[];
     },
     enabled: !!id,
   });
@@ -105,18 +105,6 @@ export function useCampaignVisits(id: string) {
     queryKey: campaignKeys.visits(id),
     queryFn: async () => {
       const response = await apiClient.get<Visit[]>(`/api/business/campaigns/${id}/visits`);
-      return response.data;
-    },
-    enabled: !!id,
-  });
-}
-
-// Fetch campaign activity
-export function useCampaignActivity(id: string) {
-  return useQuery({
-    queryKey: campaignKeys.activity(id),
-    queryFn: async () => {
-      const response = await apiClient.get<CampaignActivity[]>(`/api/business/campaigns/${id}/activity`);
       return response.data;
     },
     enabled: !!id,

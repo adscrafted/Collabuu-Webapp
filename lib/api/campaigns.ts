@@ -39,12 +39,6 @@ export const campaignsApi = {
     if (filters?.search) {
       params.append('search', filters.search);
     }
-    if (filters?.startDate) {
-      params.append('startDate', filters.startDate.toISOString());
-    }
-    if (filters?.endDate) {
-      params.append('endDate', filters.endDate.toISOString());
-    }
     if (filters?.sortBy) {
       params.append('sortBy', filters.sortBy);
     }

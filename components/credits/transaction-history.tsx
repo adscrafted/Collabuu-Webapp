@@ -26,10 +26,9 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   useTransactionHistory,
-  exportTransactionsToCSV,
   Transaction,
 } from '@/lib/hooks/use-transaction-history';
-import { Download, ChevronLeft, ChevronRight, Loader2, Receipt } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TransactionHistoryProps {
@@ -50,12 +49,6 @@ export function TransactionHistory({ businessId }: TransactionHistoryProps) {
   };
 
   const { data, isLoading, error } = useTransactionHistory(businessId, filters);
-
-  const handleExport = () => {
-    if (data?.transactions) {
-      exportTransactionsToCSV(data.transactions);
-    }
-  };
 
   const getTypeColor = (type: Transaction['type']) => {
     switch (type) {
@@ -103,21 +96,8 @@ export function TransactionHistory({ businessId }: TransactionHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Transaction History</CardTitle>
-            <CardDescription>View all your credit transactions</CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            disabled={!data?.transactions || data.transactions.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
+        <CardTitle>Transaction History</CardTitle>
+        <CardDescription>View all your credit transactions</CardDescription>
       </CardHeader>
 
       <CardContent>

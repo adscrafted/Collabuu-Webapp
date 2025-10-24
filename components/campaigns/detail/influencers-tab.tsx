@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, Users, Filter, Download, UserCheck, AlertCircle, Search, X } from 'lucide-react';
+import { CheckCircle, Users, Filter, UserCheck, AlertCircle, Search, X } from 'lucide-react';
 import {
   useCampaignApplications,
   useCampaignParticipants,
@@ -131,15 +131,6 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
     }
   };
 
-  // WEB-ONLY FEATURE: Export Participants to CSV
-  // iOS does not have export functionality - web-exclusive data export feature
-  const handleExportParticipants = () => {
-    // In a real app, this would export to CSV
-    toast({
-      title: 'Export Started',
-      description: 'Participant list is being downloaded',
-    });
-  };
 
   // Filter participants by search query
   const filteredParticipants = participants
@@ -384,12 +375,6 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
                       <SelectItem value="performance">Best Performance</SelectItem>
                     </SelectContent>
                   </Select>
-                  {/* WEB-ONLY FEATURE: Export Button */}
-                  {/* iOS does not have export functionality */}
-                  <Button variant="outline" onClick={handleExportParticipants} className="shadow-sm hover:shadow transition-shadow">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
                 </div>
               </div>
               {participants && participants.length > 3 && (

@@ -21,13 +21,36 @@ export default function CampaignsPage() {
     status: [CampaignStatus.ACTIVE],
   });
 
-  const { data, isLoading, error } = useCampaigns(filters);
+  // Separate search term for client-side filtering (instant search)
+  const searchTerm = filters.search || '';
+
+  // API filters (exclude search for server-side query)
+  const apiFilters = React.useMemo(() => {
+    const { search, ...rest } = filters;
+    return rest;
+  }, [filters]);
+
+  const { data, isLoading, error } = useCampaigns(apiFilters);
+
+  // Client-side search filtering (instant, no API call)
+  const filteredCampaigns = React.useMemo(() => {
+    if (!data?.campaigns || !searchTerm) {
+      return data?.campaigns || [];
+    }
+
+    const lowerSearch = searchTerm.toLowerCase();
+    return data.campaigns.filter((campaign) => {
+      return (
+        campaign.title.toLowerCase().includes(lowerSearch) ||
+        campaign.description?.toLowerCase().includes(lowerSearch)
+      );
+    });
+  }, [data?.campaigns, searchTerm]);
 
   const hasFilters = Boolean(
     filters.status?.length ||
     filters.type ||
     filters.search ||
-    filters.startDate ||
     (filters.sortBy && filters.sortBy !== 'newest')
   );
 
@@ -86,8 +109,12 @@ export default function CampaignsPage() {
       {!isLoading && data && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600">
-            {data.total === 0 ? (
+            {filteredCampaigns.length === 0 ? (
               'No campaigns found'
+            ) : searchTerm ? (
+              <>
+                Showing {filteredCampaigns.length} of {data.total} campaigns
+              </>
             ) : (
               <>
                 Showing {((filters.page || 1) - 1) * ITEMS_PER_PAGE + 1} to{' '}
@@ -102,16 +129,16 @@ export default function CampaignsPage() {
       <div>
         {isLoading ? (
           <CampaignListSkeleton count={6} />
-        ) : data && data.campaigns.length > 0 ? (
+        ) : filteredCampaigns.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {data.campaigns.map((campaign) => (
+              {filteredCampaigns.map((campaign) => (
                 <CampaignCard key={campaign.id} campaign={campaign} />
               ))}
             </div>
 
             {/* Pagination */}
-            {data.totalPages > 1 && (
+            {data && data.totalPages > 1 && (
               <div className="mt-8 flex items-center justify-center gap-2">
                 <Button
                   variant="outline"

@@ -92,7 +92,7 @@ export function ParticipantCard({ participant, onRemove, isLoading }: Participan
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-gray-500">Visits</p>
                 <p className="mt-1 text-lg font-semibold text-gray-900">
@@ -109,12 +109,6 @@ export function ParticipantCard({ participant, onRemove, isLoading }: Participan
                 <p className="text-xs text-gray-500">Credits Earned</p>
                 <p className="mt-1 text-lg font-semibold text-gray-900">
                   {participant.creditsEarned}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Conversion Rate</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {(participant.conversionRate ?? 0).toFixed(1)}%
                 </p>
               </div>
             </div>
