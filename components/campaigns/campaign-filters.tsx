@@ -14,6 +14,21 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { CampaignFilters, CampaignStatus, CampaignType } from '@/lib/types/campaign';
 
+// Client-only wrapper to prevent hydration mismatches
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
 interface CampaignFiltersProps {
   filters: CampaignFilters;
   onFiltersChange: (filters: CampaignFilters) => void;
@@ -106,54 +121,60 @@ export function CampaignFiltersBar({ filters, onFiltersChange }: CampaignFilters
         </div>
 
         {/* Status Filter */}
-        <Select
-          value={filters.status?.join(',') || 'all'}
-          onValueChange={handleStatusChange}
-        >
-          <SelectTrigger className="w-full lg:w-[180px] h-10 rounded-lg border-pink-500">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value={CampaignStatus.ACTIVE}>Active</SelectItem>
-            <SelectItem value={CampaignStatus.PAUSED}>Paused</SelectItem>
-            <SelectItem value={CampaignStatus.DRAFT}>Draft</SelectItem>
-            <SelectItem value={CampaignStatus.COMPLETED}>Completed</SelectItem>
-            <SelectItem value={CampaignStatus.CANCELLED}>Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        <ClientOnly>
+          <Select
+            value={filters.status?.join(',') || 'all'}
+            onValueChange={handleStatusChange}
+          >
+            <SelectTrigger className="w-full lg:w-[180px] h-10 rounded-lg border-pink-500">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value={CampaignStatus.ACTIVE}>Active</SelectItem>
+              <SelectItem value={CampaignStatus.PAUSED}>Paused</SelectItem>
+              <SelectItem value={CampaignStatus.DRAFT}>Draft</SelectItem>
+              <SelectItem value={CampaignStatus.COMPLETED}>Completed</SelectItem>
+              <SelectItem value={CampaignStatus.CANCELLED}>Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </ClientOnly>
 
         {/* Type Filter */}
-        <Select
-          value={filters.type || 'all'}
-          onValueChange={handleTypeChange}
-        >
-          <SelectTrigger className="w-full lg:w-[200px] h-10 rounded-lg border-pink-500">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value={CampaignType.PAY_PER_CUSTOMER}>Pay Per Customer</SelectItem>
-            <SelectItem value={CampaignType.MEDIA_EVENT}>Media Event</SelectItem>
-            <SelectItem value={CampaignType.REWARDS}>Rewards</SelectItem>
-          </SelectContent>
-        </Select>
+        <ClientOnly>
+          <Select
+            value={filters.type || 'all'}
+            onValueChange={handleTypeChange}
+          >
+            <SelectTrigger className="w-full lg:w-[200px] h-10 rounded-lg border-pink-500">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value={CampaignType.PAY_PER_CUSTOMER}>Pay Per Customer</SelectItem>
+              <SelectItem value={CampaignType.MEDIA_EVENT}>Media Event</SelectItem>
+              <SelectItem value={CampaignType.REWARDS}>Rewards</SelectItem>
+            </SelectContent>
+          </Select>
+        </ClientOnly>
 
         {/* Sort Filter */}
-        <Select
-          value={filters.sortBy || 'newest'}
-          onValueChange={handleSortChange}
-        >
-          <SelectTrigger className="w-full lg:w-[160px] h-10 rounded-lg border-pink-500">
-            <SelectValue placeholder="Sort" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="most_visits">Most Visits</SelectItem>
-            <SelectItem value="end_date">End Date</SelectItem>
-          </SelectContent>
-        </Select>
+        <ClientOnly>
+          <Select
+            value={filters.sortBy || 'newest'}
+            onValueChange={handleSortChange}
+          >
+            <SelectTrigger className="w-full lg:w-[160px] h-10 rounded-lg border-pink-500">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="most_visits">Most Visits</SelectItem>
+              <SelectItem value="end_date">End Date</SelectItem>
+            </SelectContent>
+          </Select>
+        </ClientOnly>
       </div>
 
       {/* Active Filters Display */}

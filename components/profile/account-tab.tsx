@@ -61,21 +61,6 @@ export function AccountTab() {
               Change Password
             </Button>
           </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label>Two-Factor Authentication</Label>
-              <p className="text-sm text-gray-500 mt-1">
-                Add an extra layer of security to your account
-              </p>
-            </div>
-            <Switch
-              checked={accountSettings?.twoFactorEnabled || false}
-              disabled
-            />
-          </div>
         </div>
       </div>
 

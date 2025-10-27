@@ -40,6 +40,15 @@ export function CampaignDetailsStep({
   React.useEffect(() => {
     if (campaignType === CampaignType.MEDIA_EVENT) {
       form.setValue('budget.totalCredits', 300);
+
+      // Set default event date to 5 days from now at 12pm if not already set
+      const currentEventDate = form.getValues('eventDate');
+      if (!currentEventDate) {
+        const defaultDate = new Date();
+        defaultDate.setDate(defaultDate.getDate() + 5);
+        defaultDate.setHours(12, 0, 0, 0);
+        form.setValue('eventDate', defaultDate);
+      }
     } else if (campaignType === CampaignType.REWARDS) {
       form.setValue('budget.totalCredits', 0);
       form.setValue('budget.influencerSpots', 0);

@@ -107,43 +107,60 @@ export async function POST(request: NextRequest) {
     // Get request body
     const body = await request.json();
 
+    console.log('📝 Creating campaign for user:', user.id);
+    console.log('📝 Request body:', JSON.stringify(body, null, 2));
+
     // Create campaign in Supabase
+    const campaignData = {
+      business_id: user.id,
+      title: body.title,
+      description: body.description,
+      payment_type: body.paymentType,
+      status: body.status || 'draft',
+      period_start: body.periodStart,
+      period_end: body.periodEnd,
+      influencer_spots: body.influencerSpots,
+      credits_per_action: body.creditsPerAction,
+      credits_per_customer: body.creditsPerCustomer,
+      total_credits: body.totalCredits,
+      image_url: body.imageUrl,
+      visibility: body.visibility || 'public',
+      requirements: body.requirements,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log('💾 Inserting campaign data:', JSON.stringify(campaignData, null, 2));
+
     const { data: campaign, error: createError } = await supabase
       .from('campaigns')
-      .insert({
-        business_id: user.id,
-        title: body.title,
-        description: body.description,
-        payment_type: body.paymentType,
-        status: body.status || 'draft',
-        period_start: body.periodStart,
-        period_end: body.periodEnd,
-        influencer_spots: body.influencerSpots,
-        credits_per_action: body.creditsPerAction,
-        credits_per_customer: body.creditsPerCustomer,
-        total_credits: body.totalCredits,
-        image_url: body.imageUrl,
-        visibility: body.visibility || 'public',
-        requirements: body.requirements,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .insert(campaignData)
       .select()
       .single();
 
     if (createError) {
-      console.error('Error creating campaign:', createError);
+      console.error('❌ Error creating campaign:', createError);
+      console.error('❌ Error details:', JSON.stringify(createError, null, 2));
       return NextResponse.json(
-        { error: 'Failed to create campaign' },
+        {
+          error: 'Failed to create campaign',
+          details: createError.message,
+          hint: createError.hint,
+        },
         { status: 500 }
       );
     }
 
+    console.log('✅ Campaign created successfully:', campaign);
     return NextResponse.json(campaign);
   } catch (error) {
-    console.error('Create campaign API error:', error);
+    console.error('❌ Create campaign API error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
