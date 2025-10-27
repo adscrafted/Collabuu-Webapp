@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createCheckoutSession } from '@/lib/stripe/server';
-import { getCreditPackageById } from '@/lib/stripe/config';
+import { calculateCreditPricing } from '@/lib/stripe/config';
 
 // Rate limiting map (simple in-memory, use Redis in production)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -36,14 +36,14 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { packageId, userId, businessId, userEmail } = body;
+    const { credits, amount, userId, businessId, userEmail } = body;
 
     // Validate required fields
-    if (!packageId || !userId || !businessId || !userEmail) {
+    if (!credits || !amount || !userId || !businessId || !userEmail) {
       return NextResponse.json(
         {
           error: 'Missing required fields',
-          details: 'packageId, userId, businessId, and userEmail are required',
+          details: 'credits, amount, userId, businessId, and userEmail are required',
         },
         { status: 400 }
       );
@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(userEmail)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate credits range
+    if (credits < 100 || credits > 100000) {
+      return NextResponse.json(
+        { error: 'Invalid credit amount', details: 'Credits must be between 100 and 100,000' },
         { status: 400 }
       );
     }
@@ -69,39 +77,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get credit package
-    const creditPackage = getCreditPackageById(packageId);
+    // Calculate server-side pricing to prevent tampering
+    const pricing = calculateCreditPricing(credits);
 
-    if (!creditPackage) {
+    // Validate that the client-provided amount matches server calculation
+    // Allow for small floating point differences (within $0.01)
+    if (Math.abs(amount - pricing.price) > 0.01) {
       return NextResponse.json(
-        { error: 'Invalid package ID', packageId },
+        {
+          error: 'Price mismatch',
+          details: 'The provided amount does not match the calculated price',
+          expected: pricing.price,
+          received: amount
+        },
         { status: 400 }
       );
     }
 
-    // Validate credits and price match
-    if (body.credits && body.credits !== creditPackage.credits) {
-      return NextResponse.json(
-        { error: 'Credits mismatch' },
-        { status: 400 }
-      );
-    }
+    // Get origin from request headers for redirect URLs
+    const origin = request.headers.get('origin') || 'http://localhost:3000';
 
-    if (body.price && body.price !== creditPackage.price) {
-      return NextResponse.json(
-        { error: 'Price mismatch' },
-        { status: 400 }
-      );
-    }
-
-    // Create checkout session
+    // Create checkout session with validated pricing
     const session = await createCheckoutSession({
-      packageId: creditPackage.id,
-      credits: creditPackage.credits,
-      price: creditPackage.price,
+      packageId: `custom_${credits}credits`,
+      credits: pricing.credits,
+      price: pricing.price,
       userId,
       businessId,
       userEmail,
+      origin,
     });
 
     // Return session details
@@ -118,10 +122,18 @@ export async function POST(request: NextRequest) {
 
     // Check if it's a Stripe error
     if (error instanceof Error) {
+      // Log detailed error information
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+
       return NextResponse.json(
         {
           error: 'Failed to create checkout session',
           message: error.message,
+          details: error.name,
         },
         { status: 500 }
       );

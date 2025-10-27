@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { formatNumber, getPerformanceTier } from '@/lib/utils';
+import { formatNumber, formatNumberWithCommas, getPerformanceTier } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,19 +96,19 @@ export function ParticipantCard({ participant, onRemove, isLoading }: Participan
               <div>
                 <p className="text-xs text-gray-500">Visits</p>
                 <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {participant.visitsGenerated}
+                  {formatNumberWithCommas(participant.visitsGenerated)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Conversions</p>
                 <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {participant.conversions}
+                  {formatNumberWithCommas(participant.conversions)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Credits Earned</p>
                 <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {participant.creditsEarned}
+                  {formatNumberWithCommas(participant.creditsEarned)}
                 </p>
               </div>
             </div>

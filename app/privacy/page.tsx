@@ -118,14 +118,11 @@ export default function PrivacyPolicy() {
 
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Contact Information</h2>
-                <p className="text-gray-600 leading-relaxed mb-2">
+                <p className="text-gray-600 leading-relaxed">
                   <strong className="text-gray-900">Email:</strong>{' '}
                   <a href="mailto:support@collabuu.com" className="font-medium text-pink-500 hover:text-pink-600">
                     support@collabuu.com
                   </a>
-                </p>
-                <p className="text-gray-600 leading-relaxed">
-                  <strong className="text-gray-900">Address:</strong> 1234 Fake Street, Edmonton, Alberta, Canada
                 </p>
               </section>
 

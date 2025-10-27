@@ -45,26 +45,26 @@ export function BudgetCalculator({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-700">Credits per customer:</span>
                 <span className="font-semibold text-gray-900">
-                  {creditsPerCustomer || 0}
+                  {(creditsPerCustomer || 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-700">Influencer spots:</span>
                 <span className="font-semibold text-gray-900">
-                  {influencerSpots || 0}
+                  {(influencerSpots || 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-700">Minimum budget:</span>
                 <span className="font-semibold text-gray-900">
-                  {(influencerSpots || 0) * 150} credits
+                  {((influencerSpots || 0) * 150).toLocaleString()} credits
                 </span>
               </div>
               {creditsPerCustomer && creditsPerCustomer > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-700">Estimated customers:</span>
                   <span className="font-semibold text-gray-900">
-                    {Math.floor(totalCredits / creditsPerCustomer)}
+                    {Math.floor(totalCredits / creditsPerCustomer).toLocaleString()}
                   </span>
                 </div>
               )}
@@ -80,7 +80,7 @@ export function BudgetCalculator({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-700">Influencer spots:</span>
                 <span className="font-semibold text-gray-900">
-                  {influencerSpots || 0}
+                  {(influencerSpots || 0).toLocaleString()}
                 </span>
               </div>
             </>

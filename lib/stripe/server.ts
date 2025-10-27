@@ -36,6 +36,7 @@ export interface CreateCheckoutSessionParams {
   userEmail: string;
   successUrl?: string;
   cancelUrl?: string;
+  origin?: string; // For deriving URLs when NEXT_PUBLIC_APP_URL is not set
 }
 
 export async function createCheckoutSession({
@@ -47,8 +48,12 @@ export async function createCheckoutSession({
   userEmail,
   successUrl,
   cancelUrl,
+  origin,
 }: CreateCheckoutSessionParams): Promise<Stripe.Checkout.Session> {
   try {
+    // Determine base URL for redirects
+    const baseUrl = origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -65,8 +70,8 @@ export async function createCheckoutSession({
           quantity: 1,
         },
       ],
-      success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/credits?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/credits?canceled=true`,
+      success_url: successUrl || `${baseUrl}/profile?tab=billing&success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${baseUrl}/profile?tab=billing&canceled=true`,
       customer_email: userEmail,
       client_reference_id: userId,
       metadata: {

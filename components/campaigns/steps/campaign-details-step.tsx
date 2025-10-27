@@ -13,12 +13,12 @@ import { BudgetCalculator } from '../form/budget-calculator';
 
 interface CampaignDetailsStepProps {
   form: UseFormReturn<CampaignFormData>;
-  availableCredits?: number;
+  availableCredits: number;
 }
 
 export function CampaignDetailsStep({
   form,
-  availableCredits = 10000,
+  availableCredits,
 }: CampaignDetailsStepProps) {
   const campaignType = form.watch('type');
   const startDate = form.watch('startDate');

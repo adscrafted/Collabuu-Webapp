@@ -14,7 +14,9 @@ import { BasicInfoStep } from '@/components/campaigns/steps/basic-info-step';
 import { CampaignDetailsStep } from '@/components/campaigns/steps/campaign-details-step';
 import { ReviewStep } from '@/components/campaigns/steps/review-step';
 import { useCreateCampaign } from '@/lib/hooks/use-create-campaign';
-import { ArrowLeft, ArrowRight, Rocket } from 'lucide-react';
+import { useCreditBalance } from '@/lib/hooks/use-credit-balance';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { ArrowRight, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
@@ -27,6 +29,8 @@ const STEPS = [
 export default function NewCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
+  const { token } = useAuthStore();
+  const { data: creditBalance } = useCreditBalance(token);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
@@ -74,12 +78,6 @@ export default function NewCampaignPage() {
 
     if (isValid && currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -195,25 +193,11 @@ export default function NewCampaignPage() {
         <form onSubmit={handleSubmit}>
           {currentStep === 0 && <CampaignTypeStep form={form} />}
           {currentStep === 1 && <BasicInfoStep form={form} />}
-          {currentStep === 2 && <CampaignDetailsStep form={form} availableCredits={10000} />}
+          {currentStep === 2 && <CampaignDetailsStep form={form} availableCredits={creditBalance?.credits ?? 0} />}
           {currentStep === 3 && <ReviewStep form={form} onEditStep={handleEditStep} />}
 
           {/* Navigation Buttons */}
-          <div className="mt-8 flex items-center justify-between pt-6">
-            <div className="flex gap-3">
-              {currentStep > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleBack}
-                  disabled={isLoading}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              )}
-            </div>
-
+          <div className="mt-8 flex items-center justify-end pt-6">
             <div className="flex gap-3">
               <Button
                 type="button"

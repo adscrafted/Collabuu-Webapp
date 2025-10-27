@@ -71,17 +71,6 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Hero Image/Illustration Placeholder */}
-        <div className="mx-auto mt-16 max-w-5xl">
-          <div className="relative rounded-2xl border border-gray-200 bg-gradient-to-br from-purple-100 to-pink-100 p-8 shadow-2xl">
-            <div className="aspect-video rounded-lg bg-white/50 backdrop-blur">
-              {/* You can replace this with an actual dashboard screenshot or illustration */}
-              <div className="flex h-full items-center justify-center text-gray-400">
-                <span className="text-sm">Dashboard Preview</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

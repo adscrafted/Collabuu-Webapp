@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CampaignWithStats, CampaignType, CampaignStatus } from '@/lib/types/campaign';
-import { cn } from '@/lib/utils';
+import { cn, formatNumberWithCommas } from '@/lib/utils';
 
 interface CampaignCardProps {
   campaign: CampaignWithStats;
@@ -125,19 +125,19 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
             <div className="flex items-center gap-1.5">
               <Users className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-900">
-                {campaign.stats.participantsCount}
+                {formatNumberWithCommas(campaign.stats.participantsCount)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Eye className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-900">
-                {campaign.stats.visitsCount}
+                {formatNumberWithCommas(campaign.stats.visitsCount)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <CreditCard className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-900">
-                {campaign.stats.creditsSpent}
+                {formatNumberWithCommas(campaign.stats.creditsSpent)}
               </span>
             </div>
           </div>
@@ -147,7 +147,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Credits</span>
               <span className="font-medium text-gray-900">
-                {campaign.stats.creditsSpent} / {campaign.budget.totalCredits}
+                {formatNumberWithCommas(campaign.stats.creditsSpent)} / {formatNumberWithCommas(campaign.budget.totalCredits)}
               </span>
             </div>
 

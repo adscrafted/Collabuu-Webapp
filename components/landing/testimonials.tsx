@@ -18,67 +18,13 @@ export function Testimonials() {
           </p>
         </div>
 
-        {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          <TestimonialCard
-            quote="Collabuu has transformed how we work with influencers. The platform is intuitive, and we've seen a 3x increase in campaign ROI."
-            author="Sarah Johnson"
-            role="Marketing Director"
-            company="TechFlow Inc."
-            initials="SJ"
-          />
-          <TestimonialCard
-            quote="As a creator, I love that there are no platform fees. I finally get to keep 100% of what I earn, and the payment process is seamless."
-            author="Marcus Chen"
-            role="Content Creator"
-            company="@marcusmedia"
-            initials="MC"
-          />
-          <TestimonialCard
-            quote="The campaign management and tracking features are incredible. We can finally prove the value of influencer marketing to our stakeholders."
-            author="Emily Rodriguez"
-            role="Head of Growth"
-            company="BeautyBox"
-            initials="ER"
-          />
-          <TestimonialCard
-            quote="We've managed over 50 campaigns through Collabuu and the automation features have saved us countless hours. It's a game-changer."
-            author="David Park"
-            role="Brand Manager"
-            company="FitLife"
-            initials="DP"
-          />
-          <TestimonialCard
-            quote="The discovery tools helped me find brands that truly align with my values. I've built long-term partnerships that feel authentic."
-            author="Jessica Williams"
-            role="Lifestyle Influencer"
-            company="@jesslifestyle"
-            initials="JW"
-          />
-          <TestimonialCard
-            quote="Collabuu's customer support is outstanding. They're always there to help us navigate campaigns and resolve any issues quickly."
-            author="Michael Brown"
-            role="E-commerce Director"
-            company="StyleHub"
-            initials="MB"
-          />
+        {/* Testimonials Grid - Empty until real testimonials are added to database */}
+        <div className="text-center py-12">
+          <p className="text-gray-500">
+            No testimonials available yet. Check back soon!
+          </p>
         </div>
 
-        {/* Trust Badges */}
-        <div className="border-t border-gray-200 pt-16">
-          <p className="text-center text-sm text-gray-500 mb-8">
-            TRUSTED BY BRANDS WORLDWIDE
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-12">
-            {/* Placeholder brand logos */}
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="h-8 w-32 bg-gray-200 rounded opacity-50 hover:opacity-100 transition-opacity"
-              />
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

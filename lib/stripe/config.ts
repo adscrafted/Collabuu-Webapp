@@ -22,75 +22,172 @@ export const getStripe = () => {
   return stripePromise;
 };
 
-// Credit package type definition
+// Pricing tier definition for volume discounts
+export interface PricingTier {
+  minCredits: number;
+  maxCredits?: number;
+  perCreditPrice: number;
+  discount: number;
+  label: string;
+}
+
+// Volume-based pricing tiers (baseline: $0.99 per credit)
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    minCredits: 100,
+    maxCredits: 499,
+    perCreditPrice: 0.99,
+    discount: 0,
+    label: 'Starter',
+  },
+  {
+    minCredits: 500,
+    maxCredits: 999,
+    perCreditPrice: 0.89,
+    discount: 10,
+    label: 'Save 10%',
+  },
+  {
+    minCredits: 1000,
+    maxCredits: 2499,
+    perCreditPrice: 0.84,
+    discount: 15,
+    label: 'Save 15%',
+  },
+  {
+    minCredits: 2500,
+    maxCredits: 4999,
+    perCreditPrice: 0.79,
+    discount: 20,
+    label: 'Save 20%',
+  },
+  {
+    minCredits: 5000,
+    perCreditPrice: 0.74,
+    discount: 25,
+    label: 'Save 25%',
+  },
+];
+
+// Calculate pricing for a given credit amount
+export interface CreditPricing {
+  credits: number;
+  price: number;
+  perCreditPrice: number;
+  discount: number;
+  baselinePrice: number; // What they would pay at baseline
+  savings: number;
+  tier: PricingTier;
+}
+
+export const calculateCreditPricing = (credits: number): CreditPricing => {
+  // Ensure minimum of 100 credits
+  const normalizedCredits = Math.max(100, credits);
+
+  // Find the applicable tier
+  const tier = PRICING_TIERS.find(
+    (t) => normalizedCredits >= t.minCredits && (!t.maxCredits || normalizedCredits <= t.maxCredits)
+  ) || PRICING_TIERS[PRICING_TIERS.length - 1]; // Default to highest tier if over max
+
+  const price = normalizedCredits * tier.perCreditPrice;
+  const baselinePrice = normalizedCredits * 0.99;
+  const savings = baselinePrice - price;
+
+  return {
+    credits: normalizedCredits,
+    price: Math.round(price * 100) / 100, // Round to 2 decimals
+    perCreditPrice: tier.perCreditPrice,
+    discount: tier.discount,
+    baselinePrice: Math.round(baselinePrice * 100) / 100,
+    savings: Math.round(savings * 100) / 100,
+    tier,
+  };
+};
+
+// Suggested credit amounts for quick selection
+export const SUGGESTED_AMOUNTS = [100, 500, 1000, 2500, 5000, 10000];
+
+// Legacy credit package type for backward compatibility
 export interface CreditPackage {
   id: string;
-  productId: string; // Matches iOS product ID
+  productId: string;
   credits: number;
-  price: number; // Price in USD
-  priceId?: string; // Stripe Price ID (set in Stripe Dashboard)
+  price: number;
+  priceId?: string;
+  testPriceId?: string;
+  livePriceId?: string;
   displayPrice: string;
   perCreditPrice: number;
-  discount?: number; // Discount percentage
+  discount?: number;
   recommended?: boolean;
 }
 
-// Credit packages with savings calculated from $1 per credit baseline
+// Legacy credit packages for backward compatibility (deprecated - use slider with calculateCreditPricing instead)
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     id: '100credits',
     productId: '100credits',
     credits: 100,
-    price: 100,
-    displayPrice: '$100',
-    perCreditPrice: 1.0,
-    discount: 0, // Baseline pricing
-    // priceId: 'price_xxx', // Set after creating in Stripe Dashboard
+    price: 99,
+    testPriceId: 'price_1SMbYPQ9ffGKoXMhcaHpsha4',
+    livePriceId: 'price_1SMb79LcpseE8lIqQBB81a0N',
+    displayPrice: '$99',
+    perCreditPrice: 0.99,
+    discount: 0,
   },
   {
     id: '500credits',
     productId: '500credits',
     credits: 500,
-    price: 450,
-    displayPrice: '$450',
-    perCreditPrice: 0.90,
-    discount: 10, // Save 10% from $500 baseline
-    // priceId: 'price_xxx', // Set after creating in Stripe Dashboard
+    price: 445,
+    testPriceId: 'price_1SMbdZQ9ffGKoXMhQ21BA3oA',
+    livePriceId: 'price_1SMbDjLcpseE8lIqg73UrIsJ',
+    displayPrice: '$445',
+    perCreditPrice: 0.89,
+    discount: 10,
   },
   {
     id: '1000credits',
     productId: '1000credits',
     credits: 1000,
-    price: 850,
-    displayPrice: '$850',
-    perCreditPrice: 0.85,
-    discount: 15, // Save 15% from $1000 baseline
+    price: 840,
+    testPriceId: 'price_1SMbdcQ9ffGKoXMhnVC9FVHD',
+    livePriceId: 'price_1SMbG6LcpseE8lIqnttgJcUe',
+    displayPrice: '$840',
+    perCreditPrice: 0.84,
+    discount: 15,
     recommended: true,
-    // priceId: 'price_xxx', // Set after creating in Stripe Dashboard
   },
   {
     id: '2500credits',
     productId: '2500credits',
     credits: 2500,
-    price: 2000,
-    displayPrice: '$2,000',
-    perCreditPrice: 0.80,
-    discount: 20, // Save 20% from $2500 baseline
-    // priceId: 'price_xxx', // Set after creating in Stripe Dashboard
+    price: 1975,
+    testPriceId: 'price_1SMbgwQ9ffGKoXMhyYsyF1FK',
+    livePriceId: 'price_1SMbGQLcpseE8lIqFgUVQorx',
+    displayPrice: '$1,975',
+    perCreditPrice: 0.79,
+    discount: 20,
   },
   {
     id: '5000credits',
     productId: '5000credits',
     credits: 5000,
-    price: 3750,
-    displayPrice: '$3,750',
-    perCreditPrice: 0.75,
-    discount: 25, // Save 25% from $5000 baseline
-    // priceId: 'price_xxx', // Set after creating in Stripe Dashboard
+    price: 3700,
+    testPriceId: 'price_1SMbiIQ9ffGKoXMhEzj5aqHI',
+    livePriceId: 'price_1SMbKDLcpseE8lIq6bOOdOx4',
+    displayPrice: '$3,700',
+    perCreditPrice: 0.74,
+    discount: 25,
   },
-];
+].map(pkg => ({
+  ...pkg,
+  priceId: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_test_')
+    ? pkg.testPriceId
+    : pkg.livePriceId
+}));
 
-// Helper function to get package by ID
+// Helper function to get package by ID (legacy)
 export const getCreditPackageById = (packageId: string): CreditPackage | undefined => {
   return CREDIT_PACKAGES.find((pkg) => pkg.id === packageId);
 };

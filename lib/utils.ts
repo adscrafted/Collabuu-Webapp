@@ -6,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Format numbers with comma separators
+ * Examples: 1000 -> 1,000, 50000 -> 50,000, 1500000 -> 1,500,000
+ */
+export function formatNumberWithCommas(num: number): string {
+  return num.toLocaleString('en-US');
+}
+
+/**
  * Format large numbers with K, M suffixes
  * Examples: 1200 -> 1.2k, 50000 -> 50k, 1500000 -> 1.5M
  */

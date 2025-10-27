@@ -64,13 +64,13 @@ export const campaignsApi = {
       campaigns: campaigns.map((campaign: any) => ({
         id: campaign.id,
         businessId: campaign.business_id || campaign.businessId,
-        type: campaign.campaign_type || campaign.type,
+        type: campaign.payment_type || campaign.campaign_type || campaign.type,
         status: campaign.status,
         title: campaign.title,
         description: campaign.description,
         imageUrl: campaign.image_url || campaign.imageUrl || campaign.imageURL,
-        startDate: campaign.start_date || campaign.periodStart,
-        endDate: campaign.end_date || campaign.periodEnd,
+        startDate: campaign.period_start || campaign.start_date || campaign.periodStart,
+        endDate: campaign.period_end || campaign.end_date || campaign.periodEnd,
         budget: {
           totalCredits: campaign.total_credits || campaign.totalCredits || 0,
           creditsPerCustomer: campaign.credits_per_customer || campaign.creditsPerCustomer || campaign.credits_per_action || campaign.creditsPerAction,

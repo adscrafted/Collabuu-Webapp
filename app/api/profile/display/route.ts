@@ -30,15 +30,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return display settings with defaults
-    const displaySettings = user.user_metadata?.displaySettings || {
-      theme: 'light',
-      language: 'en',
-      timezone: 'America/New_York',
-      dateFormat: 'MM/DD/YYYY',
-      timeFormat: '12h',
-      currency: 'USD',
-    };
+    // Return display settings from user metadata (no defaults)
+    const displaySettings = user.user_metadata?.displaySettings || null;
 
     return NextResponse.json(displaySettings);
   } catch (error) {

@@ -80,23 +80,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="#features"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#pricing"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#for-brands"
+                  href="/brands"
                   className="text-gray-600 transition-colors hover:text-purple-600"
                 >
                   For Brands
@@ -104,18 +88,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#for-creators"
+                  href="/creators"
                   className="text-gray-600 transition-colors hover:text-purple-600"
                 >
                   For Creators
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/case-studies"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Case Studies
                 </Link>
               </li>
             </ul>
@@ -137,26 +113,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/careers"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/blog"
                   className="text-gray-600 transition-colors hover:text-purple-600"
                 >
                   Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/press"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Press
                 </Link>
               </li>
               <li>
@@ -182,30 +142,6 @@ export function Footer() {
                   className="text-gray-600 transition-colors hover:text-purple-600"
                 >
                   Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/documentation"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/api"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  API
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/status"
-                  className="text-gray-600 transition-colors hover:text-purple-600"
-                >
-                  Status
                 </Link>
               </li>
               <li>

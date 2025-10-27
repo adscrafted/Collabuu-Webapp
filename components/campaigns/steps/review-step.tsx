@@ -157,13 +157,13 @@ export function ReviewStep({ form, onEditStep }: ReviewStepProps) {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Credits per customer:</span>
                       <span className="font-semibold text-gray-900">
-                        {formData.budget.creditsPerCustomer}
+                        {formData.budget.creditsPerCustomer?.toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Influencer spots:</span>
                       <span className="font-semibold text-gray-900">
-                        {formData.budget.influencerSpots}
+                        {formData.budget.influencerSpots?.toLocaleString()}
                       </span>
                     </div>
                   </>
@@ -180,7 +180,7 @@ export function ReviewStep({ form, onEditStep }: ReviewStepProps) {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Influencer spots:</span>
                       <span className="font-semibold text-gray-900">
-                        {formData.budget.influencerSpots}
+                        {formData.budget.influencerSpots?.toLocaleString()}
                       </span>
                     </div>
                   </>
@@ -190,7 +190,7 @@ export function ReviewStep({ form, onEditStep }: ReviewStepProps) {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Reward value:</span>
                     <span className="font-semibold text-gray-900">
-                      {formData.budget.rewardValue} credits
+                      {formData.budget.rewardValue?.toLocaleString()} credits
                     </span>
                   </div>
                 )}

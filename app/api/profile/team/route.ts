@@ -30,9 +30,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: Implement team members fetch from database
-    // For now, return empty array
-    return NextResponse.json([]);
+    // Query team members from database
+    const { data: teamMembers, error: teamError } = await supabase
+      .from('team_members')
+      .select('*')
+      .eq('business_id', user.id);
+
+    if (teamError) {
+      console.error('Error fetching team members:', teamError);
+      return NextResponse.json(
+        { error: 'Failed to fetch team members' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(teamMembers || []);
   } catch (error) {
     console.error('Team members API error:', error);
     return NextResponse.json(

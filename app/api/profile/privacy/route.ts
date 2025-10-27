@@ -30,18 +30,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return privacy settings with defaults
-    const privacySettings = user.user_metadata?.privacySettings || {
-      profileVisibility: 'public',
-      showEmail: false,
-      showPhone: false,
-      allowSearchEngineIndexing: true,
-      dataSharing: {
-        analytics: true,
-        marketing: false,
-        thirdParty: false,
-      },
-    };
+    // Return privacy settings from user metadata (no defaults)
+    const privacySettings = user.user_metadata?.privacySettings || null;
 
     return NextResponse.json(privacySettings);
   } catch (error) {
