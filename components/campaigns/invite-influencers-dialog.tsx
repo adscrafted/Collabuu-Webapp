@@ -178,8 +178,8 @@ export function InviteInfluencersDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Invite Influencers</DialogTitle>
           <DialogDescription>
             Search and select influencers to invite to your campaign
@@ -187,7 +187,7 @@ export function InviteInfluencersDialog({
         </DialogHeader>
 
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             type="text"
@@ -208,7 +208,7 @@ export function InviteInfluencersDialog({
 
         {/* Bulk Selection Bar */}
         {selectedInfluencers.size > 0 && (
-          <div className="flex items-center justify-between rounded-lg bg-pink-50 px-4 py-3 border border-pink-200">
+          <div className="flex items-center justify-between rounded-lg bg-pink-50 px-4 py-3 border border-pink-200 flex-shrink-0">
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-pink-600" />
               <span className="text-sm font-medium text-pink-900">
@@ -246,7 +246,7 @@ export function InviteInfluencersDialog({
         )}
 
         {/* Influencers List */}
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6 max-h-[50vh]">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -369,7 +369,7 @@ export function InviteInfluencersDialog({
           )}
         </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
