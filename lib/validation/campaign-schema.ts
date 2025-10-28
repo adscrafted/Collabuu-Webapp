@@ -195,7 +195,7 @@ export const campaignFormSchema = z
   .refine(
     (data) => {
       // Rewards must have totalCredits = 0, influencerSpots = 0, visibility = 'public'
-      if (data.type === CampaignType.REWARDS) {
+      if (data.type === CampaignType.LOYALTY_REWARD) {
         return (
           data.budget.totalCredits === 0 &&
           (data.budget.influencerSpots === 0 || data.budget.influencerSpots === undefined) &&
@@ -212,7 +212,7 @@ export const campaignFormSchema = z
   .refine(
     (data) => {
       // Rewards must have rewardValue
-      if (data.type === CampaignType.REWARDS) {
+      if (data.type === CampaignType.LOYALTY_REWARD) {
         return (
           data.budget.rewardValue !== undefined &&
           data.budget.rewardValue > 0

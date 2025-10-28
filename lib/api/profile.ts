@@ -3,9 +3,6 @@ import axios from 'axios';
 import {
   BusinessProfile,
   UpdateBusinessProfileRequest,
-  TeamMember,
-  InviteTeamMemberRequest,
-  UpdateTeamMemberRequest,
   PrivacySettings,
   DisplaySettings,
   AccountSettings,
@@ -16,8 +13,6 @@ import {
   BillingHistoryItem,
   BillingHistoryFilters,
   BillingHistoryResponse,
-  AutoRechargeSettings,
-  TaxInformation,
 } from '@/lib/types/profile';
 
 // Helper function to get cookie value
@@ -155,30 +150,6 @@ export const profileApi = {
     return response.data;
   },
 
-  // Team Members (using Next.js API routes)
-  getTeamMembers: async (): Promise<TeamMember[]> => {
-    const response = await nextApiClient.get<TeamMember[]>('/api/profile/team');
-    return response.data;
-  },
-
-  inviteTeamMember: async (data: InviteTeamMemberRequest): Promise<TeamMember> => {
-    const response = await nextApiClient.post<TeamMember>('/api/profile/team/invite', data);
-    return response.data;
-  },
-
-  updateTeamMember: async (memberId: string, data: UpdateTeamMemberRequest): Promise<TeamMember> => {
-    const response = await nextApiClient.patch<TeamMember>(`/api/profile/team/${memberId}`, data);
-    return response.data;
-  },
-
-  removeTeamMember: async (memberId: string): Promise<void> => {
-    await nextApiClient.delete(`/api/profile/team/${memberId}`);
-  },
-
-  resendInvitation: async (memberId: string): Promise<void> => {
-    await nextApiClient.post(`/api/profile/team/${memberId}/resend-invitation`);
-  },
-
   // Account Settings (using Next.js API routes)
   getAccountSettings: async (): Promise<AccountSettings> => {
     const response = await nextApiClient.get<AccountSettings>('/api/profile/account');
@@ -306,41 +277,6 @@ export const profileApi = {
     const response = await nextApiClient.get(url, {
       responseType: 'blob',
     });
-    return response.data;
-  },
-
-  // Auto Recharge (using Next.js API routes)
-  getAutoRechargeSettings: async (): Promise<AutoRechargeSettings> => {
-    const response = await nextApiClient.get<AutoRechargeSettings>('/api/profile/billing/auto-recharge');
-    return response.data;
-  },
-
-  updateAutoRechargeSettings: async (data: AutoRechargeSettings): Promise<AutoRechargeSettings> => {
-    const response = await nextApiClient.patch<AutoRechargeSettings>('/api/profile/billing/auto-recharge', data);
-    return response.data;
-  },
-
-  // Tax Information (using Next.js API routes)
-  getTaxInformation: async (): Promise<TaxInformation> => {
-    const response = await nextApiClient.get<TaxInformation>('/api/profile/billing/tax');
-    return response.data;
-  },
-
-  updateTaxInformation: async (data: TaxInformation): Promise<TaxInformation> => {
-    const response = await nextApiClient.patch<TaxInformation>('/api/profile/billing/tax', data);
-    return response.data;
-  },
-
-  uploadTaxDocument: async (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('document', file);
-
-    const response = await nextApiClient.post('/api/profile/billing/tax/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
     return response.data;
   },
 };

@@ -199,7 +199,7 @@ function CreditsPageContent() {
             <AccordionContent>
               We offer refunds within 7 days of purchase if you haven't used any of the credits.
               Once credits have been used for campaigns, they cannot be refunded. Please contact
-              our support team if you need assistance with a refund.
+              our support if you need assistance with a refund.
             </AccordionContent>
           </AccordionItem>
 
@@ -216,7 +216,7 @@ function CreditsPageContent() {
             <AccordionTrigger>Do you offer bulk or enterprise pricing?</AccordionTrigger>
             <AccordionContent>
               Yes! If you need more than 5,000 credits or run campaigns regularly, please contact
-              our sales team for custom pricing and enterprise plans. We offer volume discounts
+              our sales for custom pricing and enterprise plans. We offer volume discounts
               and dedicated support for high-volume users.
             </AccordionContent>
           </AccordionItem>

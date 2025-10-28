@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Menu,
   User,
-  Users,
   LogOut,
   ChevronDown,
 } from 'lucide-react';
@@ -19,7 +18,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const userMenuItems = [
@@ -27,11 +26,6 @@ export function Header({ onMenuClick }: HeaderProps) {
       label: 'Profile',
       icon: User,
       href: '/profile',
-    },
-    {
-      label: 'Team Members',
-      icon: Users,
-      href: '/team',
     },
     {
       label: 'Logout',
@@ -114,7 +108,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                       <button
                         key={item.label}
                         onClick={() => {
-                          router.push(item.href);
+                          if (item.label === 'Logout') {
+                            logout();
+                          } else {
+                            router.push(item.href);
+                          }
                           setIsUserMenuOpen(false);
                         }}
                         className={cn(

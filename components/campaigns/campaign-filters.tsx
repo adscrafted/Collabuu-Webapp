@@ -50,8 +50,9 @@ const formatStatusLabel = (status: CampaignStatus): string => {
 const formatTypeLabel = (type: CampaignType): string => {
   const labels: Record<CampaignType, string> = {
     [CampaignType.PAY_PER_CUSTOMER]: 'Pay Per Customer',
+    [CampaignType.PAY_PER_POST]: 'Pay Per Post',
     [CampaignType.MEDIA_EVENT]: 'Media Event',
-    [CampaignType.REWARDS]: 'Rewards',
+    [CampaignType.LOYALTY_REWARD]: 'Loyalty Reward',
   };
   return labels[type];
 };
@@ -152,8 +153,9 @@ export function CampaignFiltersBar({ filters, onFiltersChange }: CampaignFilters
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value={CampaignType.PAY_PER_CUSTOMER}>Pay Per Customer</SelectItem>
+              <SelectItem value={CampaignType.PAY_PER_POST}>Pay Per Post</SelectItem>
               <SelectItem value={CampaignType.MEDIA_EVENT}>Media Event</SelectItem>
-              <SelectItem value={CampaignType.REWARDS}>Rewards</SelectItem>
+              <SelectItem value={CampaignType.LOYALTY_REWARD}>Loyalty Reward</SelectItem>
             </SelectContent>
           </Select>
         </ClientOnly>

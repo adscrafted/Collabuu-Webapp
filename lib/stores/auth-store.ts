@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiClient } from '@/lib/api/client';
 
 export interface User {
   id: string;
@@ -87,25 +86,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshToken: async () => {
-        const { token } = get();
-        if (!token) {
-          return;
-        }
-
-        try {
-          set({ isLoading: true });
-          const response = await apiClient.post('/api/auth/refresh', {
-            refreshToken: token,
-          });
-
-          const { accessToken, user } = response.data;
-          get().login(accessToken, user);
-        } catch (error) {
-          console.error('Failed to refresh token:', error);
-          get().logout();
-        } finally {
-          set({ isLoading: false });
-        }
+        // Token refresh is handled automatically by Supabase
+        // This function is kept for compatibility but does nothing
+        // Supabase auto-refresh is enabled in lib/supabase/client.ts
+        return;
       },
 
       updateUser: (updates) => {

@@ -10,8 +10,9 @@ Collabuu is a comprehensive web application that enables businesses to create an
 
 - **Campaign Management**: Create, manage, and track influencer marketing campaigns with three campaign types (Pay Per Customer, Media Event, Loyalty Reward)
 - **Credit System**: Stripe-integrated payment system with credit packages and transaction history
-- **User Profiles**: Complete business profile management with team member invitations
-- **Authentication**: Secure authentication powered by Supabase with JWT tokens
+- **Admin Withdrawal Portal**: Secure admin area for managing influencer withdrawal requests with automated email notifications (Webapp-only feature)
+- **User Profiles**: Complete business profile management and account settings
+- **Authentication**: Secure authentication powered by Supabase with JWT tokens (separate admin and user flows)
 - **Responsive Design**: Mobile-first design with full desktop support
 
 ## Tech Stack
@@ -41,6 +42,7 @@ Collabuu is a comprehensive web application that enables businesses to create an
 ### Backend & Services
 - **Supabase** - Authentication, database, and storage
 - **Stripe** - Payment processing and subscription management
+- **Resend** - Transactional email service with React Email templates
 - **Railway** - Backend API hosting (Node.js/Express)
 
 ### Development Tools
@@ -56,8 +58,10 @@ collabuu-webapp/
 │   ├── (auth)/                   # Authentication route group
 │   │   ├── login/                # Login page
 │   │   ├── register/             # Registration page
+│   │   ├── admin/                # Admin authentication
+│   │   │   └── login/            # Admin login page
 │   │   └── layout.tsx            # Auth layout wrapper
-│   ├── (dashboard)/              # Protected dashboard routes
+│   ├── (app)/                    # Protected app routes
 │   │   ├── campaigns/            # Campaign management
 │   │   │   ├── [id]/             # Campaign detail view
 │   │   │   │   ├── edit/         # Campaign edit page
@@ -65,12 +69,18 @@ collabuu-webapp/
 │   │   │   ├── new/              # Create campaign wizard
 │   │   │   └── page.tsx          # Campaigns list
 │   │   ├── credits/              # Credit purchase & history
-│   │   ├── dashboard/            # Main dashboard
 │   │   ├── profile/              # User profile & settings
-│   │   ├── layout.tsx            # Dashboard layout with navigation
-│   │   └── page.tsx              # Dashboard redirect
+│   │   ├── admin/                # Admin portal (webapp-only)
+│   │   │   └── withdrawals/      # Withdrawal management
+│   │   ├── layout.tsx            # App layout with navigation
+│   │   └── page.tsx              # App redirect
 │   ├── api/                      # API route handlers
-│   │   └── stripe/               # Stripe webhooks & sessions
+│   │   ├── admin/                # Admin API routes
+│   │   │   ├── auth/             # Admin authentication
+│   │   │   └── withdrawals/      # Withdrawal management
+│   │   ├── business/             # Business API routes
+│   │   ├── stripe/               # Stripe webhooks & sessions
+│   │   └── upload/               # File upload handling
 │   ├── layout.tsx                # Root layout
 │   ├── page.tsx                  # Landing page
 │   └── globals.css               # Global styles & Tailwind
@@ -96,8 +106,15 @@ collabuu-webapp/
 │   ├── profile/                  # Profile & settings components
 │   │   ├── business-profile-tab.tsx
 │   │   ├── billing-tab.tsx       # Billing & subscriptions
-│   │   ├── settings-tab.tsx      # Account settings
-│   │   └── team-members-tab.tsx  # Team management
+│   │   ├── account-tab.tsx       # Account settings
+│   │   ├── change-email-modal.tsx
+│   │   └── change-password-modal.tsx
+│   │
+│   ├── admin/                    # Admin portal components
+│   │   ├── withdrawal-filters.tsx         # Filter controls
+│   │   ├── withdrawal-requests-table.tsx  # Data table
+│   │   ├── withdrawal-detail-card.tsx     # Detail view
+│   │   └── withdrawal-action-modal.tsx    # Action dialogs
 │   │
 │   ├── credits/                  # Credit system components
 │   │   ├── credit-package-card.tsx
@@ -132,11 +149,25 @@ collabuu-webapp/
 │   ├── types/                    # TypeScript type definitions
 │   │   ├── auth.ts               # Auth types
 │   │   ├── campaign.ts           # Campaign types
-│   │   └── profile.ts            # Profile types
+│   │   ├── profile.ts            # Profile types
+│   │   └── withdrawal.ts         # Withdrawal types
 │   │
 │   ├── validation/               # Zod validation schemas
 │   │   ├── campaign-schema.ts    # Campaign form validation
-│   │   └── profile-schema.ts     # Profile form validation
+│   │   ├── profile-schema.ts     # Profile form validation
+│   │   └── withdrawal-schema.ts  # Withdrawal validation
+│   │
+│   ├── auth/                     # Authentication utilities
+│   │   ├── admin.ts              # Admin auth helpers
+│   │   └── admin-middleware.ts   # API protection
+│   │
+│   ├── email/                    # Email service
+│   │   ├── service.ts            # Email sender
+│   │   └── templates/            # React Email templates
+│   │       ├── layout.tsx        # Base layout
+│   │       ├── withdrawal-approved.tsx
+│   │       ├── withdrawal-completed.tsx
+│   │       └── withdrawal-rejected.tsx
 │   │
 │   ├── constants/                # App constants
 │   │   ├── colors.ts             # Color palette
@@ -222,11 +253,17 @@ NEXT_PUBLIC_API_URL=https://your-backend-api.com
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # Stripe Configuration
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
 STRIPE_SECRET_KEY=sk_test_your_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Email Service (Resend)
+RESEND_API_KEY=re_your_api_key_here
+EMAIL_FROM=noreply@collabuu.com
+SUPPORT_EMAIL=support@collabuu.com
 ```
 
 See [.env.example](./.env.example) for a complete list with descriptions.
@@ -262,9 +299,18 @@ See [.env.example](./.env.example) for a complete list with descriptions.
 
 ### 3. Profile Management
 - **Business Profile**: Company information and branding
-- **Team Members**: Invite and manage team access
-- **Billing Settings**: Payment methods and invoices
-- **Account Settings**: Email, password, privacy preferences
+- **Billing Settings**: Credit purchase, payment methods and transaction history
+- **Account Settings**: Email, password, and security preferences
+
+### 4. Admin Withdrawal Portal (Webapp-only)
+- **Secure Authentication**: Separate admin login with role-based access control
+- **Withdrawal Management**: View, approve, complete, or reject influencer withdrawal requests
+- **Email Notifications**: Automated emails sent to influencers on status changes
+- **Audit Logging**: Complete tracking of all admin actions with IP and timestamp
+- **Filtering & Sorting**: Filter by status, date range, and sort by various criteria
+- **Export**: Download withdrawal data as CSV for accounting
+- **Account Protection**: Failed login tracking with automatic lockout after 5 attempts
+- **Transaction Management**: Mark withdrawals as complete with transaction ID after e-transfer
 
 ## Architecture Highlights
 
@@ -364,6 +410,7 @@ See [TESTING.md](./TESTING.md) for testing guidelines.
 
 ## Documentation
 
+### General Documentation
 - [Setup Guide](./SETUP.md) - Detailed installation and configuration
 - [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Production deployment instructions
 - [Backend Integration](./BACKEND_INTEGRATION.md) - API requirements and endpoints
@@ -371,6 +418,16 @@ See [TESTING.md](./TESTING.md) for testing guidelines.
 - [Features](./FEATURES.md) - Complete feature documentation
 - [Onboarding](./ONBOARDING.md) - New developer onboarding guide
 - [Contributing](./CONTRIBUTING.md) - How to contribute to the project
+
+### Admin Withdrawal Portal Documentation
+- [**Admin Withdrawal Setup Guide**](./ADMIN_WITHDRAWAL_SETUP_COMPLETE.md) - Complete setup and usage guide
+- [Admin Authentication Setup](./ADMIN_AUTH_SETUP.md) - Detailed auth configuration
+- [Admin Security Checklist](./ADMIN_SECURITY_CHECKLIST.md) - Security best practices
+- [Email Notification System](./EMAIL_NOTIFICATION_SYSTEM.md) - Email setup and templates
+- [Email Quick Start](./EMAIL_QUICK_START.md) - 5-minute email setup
+- [Withdrawal System Report](./WITHDRAWAL_SYSTEM_REPORT.md) - Technical overview
+- [Withdrawal API Documentation](./WITHDRAWAL_API.md) - API endpoint reference
+- [Admin Portal User Guide](./README_ADMIN_WITHDRAWALS.md) - Admin user instructions
 
 ## Troubleshooting
 

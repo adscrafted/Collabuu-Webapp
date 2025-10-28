@@ -16,7 +16,7 @@ const MIN_CREDITS_PER_INFLUENCER = 150;
 interface IOSCampaignPayload {
   title: string;
   description: string;
-  paymentType: 'pay_per_customer' | 'media_event' | 'rewards';
+  paymentType: 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward';
   visibility: 'public' | 'private';
   status: 'active' | 'draft';
   requirements: string;
@@ -34,10 +34,11 @@ interface IOSCampaignPayload {
  */
 function transformToIOSPayload(data: CreateCampaignRequest, imageUrl: string): IOSCampaignPayload {
   // Map campaign type to iOS payment type
-  const paymentTypeMap: Record<CampaignType, 'pay_per_customer' | 'media_event' | 'rewards'> = {
+  const paymentTypeMap: Record<CampaignType, 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward'> = {
     [CampaignType.PAY_PER_CUSTOMER]: 'pay_per_customer',
+    [CampaignType.PAY_PER_POST]: 'pay_per_post',
     [CampaignType.MEDIA_EVENT]: 'media_event',
-    [CampaignType.REWARDS]: 'rewards',
+    [CampaignType.LOYALTY_REWARD]: 'loyalty_reward',
   };
 
   const paymentType = paymentTypeMap[data.type];
@@ -56,18 +57,18 @@ function transformToIOSPayload(data: CreateCampaignRequest, imageUrl: string): I
     // CRITICAL FIX #1: creditsPerAction calculation for media events
     // Match iOS implementation: divide 300 by influencerSpots
     creditsPerAction = Math.max(Math.floor(300 / Math.max(influencerSpots, 1)), 1);
-  } else if (paymentType === 'rewards') {
-    // For rewards: Force totalCredits, influencerSpots, and creditsPerAction to 0 (matching iOS)
+  } else if (paymentType === 'loyalty_reward') {
+    // For loyalty rewards: Force totalCredits, influencerSpots, and creditsPerAction to 0 (matching iOS)
     totalCredits = 0;
     influencerSpots = 0;
-    creditsPerAction = 0;  // iOS always sets this to 0 for rewards
+    creditsPerAction = 0;  // iOS always sets this to 0 for loyalty rewards
   }
 
   // Requirements is already a string
   const requirementsString = data.requirements || '';
 
-  // For rewards campaigns, force visibility to public; otherwise use provided visibility
-  const visibility = paymentType === 'rewards' ? 'public' : (data.visibility || 'public');
+  // For loyalty reward campaigns, force visibility to public; otherwise use provided visibility
+  const visibility = paymentType === 'loyalty_reward' ? 'public' : (data.visibility || 'public');
 
   // CRITICAL FIX #2: Media event date handling
   // For media events, use eventDate as start and add 6 hours for end (matching iOS)

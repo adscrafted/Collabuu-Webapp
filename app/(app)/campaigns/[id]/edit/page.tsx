@@ -188,8 +188,9 @@ export default function EditCampaignPage() {
   const getCampaignTypeLabel = (type: CampaignType) => {
     const labels = {
       [CampaignType.PAY_PER_CUSTOMER]: 'Pay Per Customer',
+      [CampaignType.PAY_PER_POST]: 'Pay Per Post',
       [CampaignType.MEDIA_EVENT]: 'Media Event',
-      [CampaignType.REWARDS]: 'Rewards',
+      [CampaignType.LOYALTY_REWARD]: 'Loyalty Reward',
     };
     return labels[type];
   };

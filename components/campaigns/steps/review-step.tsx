@@ -186,7 +186,7 @@ export function ReviewStep({ form, onEditStep }: ReviewStepProps) {
                   </>
                 )}
 
-                {formData.type === CampaignType.REWARDS && (
+                {formData.type === CampaignType.LOYALTY_REWARD && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Reward value:</span>
                     <span className="font-semibold text-gray-900">

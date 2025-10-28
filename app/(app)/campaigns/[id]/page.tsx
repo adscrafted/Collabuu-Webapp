@@ -6,38 +6,14 @@ import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
   Edit,
-  Trash2,
-  Pause,
-  Copy,
-  Archive,
-  Play,
-  MoreVertical,
 } from 'lucide-react';
-import { useCampaign, useUpdateCampaignStatus, useDeleteCampaign, useDuplicateCampaign, useContentSubmissions } from '@/lib/hooks/use-campaign-detail';
+import { useCampaign, useContentSubmissions } from '@/lib/hooks/use-campaign-detail';
 import { CampaignStatus } from '@/lib/types/campaign';
 import { shouldShowInfluencersTab, shouldShowContentTab } from '@/lib/utils/campaign-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
 import { OverviewTab } from '@/components/campaigns/detail/overview-tab';
 import { InfluencersTab } from '@/components/campaigns/detail/influencers-tab';
 import { ContentTab } from '@/components/campaigns/detail/content-tab';
@@ -45,74 +21,13 @@ import { ContentTab } from '@/components/campaigns/detail/content-tab';
 export default function CampaignDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { toast } = useToast();
   const campaignId = params.id as string;
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Queries
   const { data: campaign, isLoading, error } = useCampaign(campaignId);
   const { data: contentSubmissions } = useContentSubmissions(campaignId);
-
-  // Mutations
-  const updateStatus = useUpdateCampaignStatus(campaignId);
-  const deleteCampaign = useDeleteCampaign();
-  const duplicateCampaign = useDuplicateCampaign();
-
-  // WEB-ONLY FEATURE: Pause/Resume/Archive Campaign
-  // iOS does not have these status change features - web-exclusive campaign management
-  const handleStatusChange = async (status: CampaignStatus) => {
-    try {
-      await updateStatus.mutateAsync(status);
-      toast({
-        title: 'Success',
-        description: `Campaign ${status === CampaignStatus.PAUSED ? 'paused' : 'resumed'} successfully`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update campaign status',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteCampaign.mutateAsync(campaignId);
-      toast({
-        title: 'Success',
-        description: 'Campaign deleted successfully',
-      });
-      router.push('/campaigns');
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete campaign',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // WEB-ONLY FEATURE: Duplicate Campaign
-  // iOS does not have this feature - web-exclusive power user feature
-  const handleDuplicate = async () => {
-    try {
-      const newCampaign = await duplicateCampaign.mutateAsync(campaignId);
-      toast({
-        title: 'Success',
-        description: 'Campaign duplicated successfully',
-      });
-      router.push(`/campaigns/${newCampaign.id}`);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to duplicate campaign',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const getStatusBadge = (status: CampaignStatus) => {
     const statusConfig = {
@@ -140,11 +55,7 @@ export default function CampaignDetailPage() {
             <Skeleton className="h-8 w-64" />
             <Skeleton className="h-4 w-32" />
           </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-20" />
-            <Skeleton className="h-10 w-20" />
-            <Skeleton className="h-10 w-10" />
-          </div>
+          <Skeleton className="h-10 w-20" />
         </div>
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-96 w-full" />
@@ -207,54 +118,6 @@ export default function CampaignDetailPage() {
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
-
-          {/* More Actions Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="hover:bg-gray-50">
-                <MoreVertical className="h-4 w-4" />
-                <span className="sr-only">More actions</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {/* Pause/Resume - conditionally rendered based on campaign status */}
-              {campaign.status === CampaignStatus.ACTIVE && (
-                <DropdownMenuItem onClick={() => handleStatusChange(CampaignStatus.PAUSED)}>
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pause Campaign
-                </DropdownMenuItem>
-              )}
-              {campaign.status === CampaignStatus.PAUSED && (
-                <DropdownMenuItem onClick={() => handleStatusChange(CampaignStatus.ACTIVE)}>
-                  <Play className="mr-2 h-4 w-4" />
-                  Resume Campaign
-                </DropdownMenuItem>
-              )}
-
-              {/* Duplicate */}
-              <DropdownMenuItem onClick={handleDuplicate}>
-                <Copy className="mr-2 h-4 w-4" />
-                Duplicate
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              {/* Archive */}
-              <DropdownMenuItem onClick={() => handleStatusChange(CampaignStatus.CANCELLED)}>
-                <Archive className="mr-2 h-4 w-4" />
-                Archive
-              </DropdownMenuItem>
-
-              {/* Delete - Destructive Style */}
-              <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-red-600 focus:text-red-600 focus:bg-red-50"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
@@ -293,7 +156,7 @@ export default function CampaignDetailPage() {
         </div>
 
         <TabsContent value="overview" className="mt-0">
-          <OverviewTab campaign={campaign} campaignId={campaignId} />
+          <OverviewTab campaign={campaign} campaignId={campaignId} onTabChange={setActiveTab} />
         </TabsContent>
 
         {showInfluencersTab && (
@@ -308,28 +171,6 @@ export default function CampaignDetailPage() {
           </TabsContent>
         )}
       </Tabs>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this campaign? This action cannot be undone. All
-              campaign data, including participants, will be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete Campaign
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

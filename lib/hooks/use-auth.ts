@@ -72,23 +72,8 @@ export function useAuth() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Set up token refresh interval (every 15 minutes)
-  useEffect(() => {
-    if (!isAuthenticated || !token) {
-      return;
-    }
-
-    const interval = setInterval(
-      () => {
-        refreshToken().catch((error) => {
-          console.error('Failed to refresh token:', error);
-        });
-      },
-      15 * 60 * 1000
-    ); // 15 minutes
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, token, refreshToken]);
+  // Token refresh is handled automatically by Supabase
+  // The onAuthStateChange listener above will update the token when Supabase refreshes it
 
   // Enhanced logout with navigation
   const logout = useCallback(async () => {

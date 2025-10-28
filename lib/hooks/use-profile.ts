@@ -2,15 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '@/lib/api/profile';
 import {
   UpdateBusinessProfileRequest,
-  InviteTeamMemberRequest,
-  UpdateTeamMemberRequest,
   PrivacySettings,
   DisplaySettings,
   ChangePasswordRequest,
   RequestEmailChangeRequest,
   ChangeEmailRequest,
-  AutoRechargeSettings,
-  TaxInformation,
   BillingHistoryFilters,
 } from '@/lib/types/profile';
 
@@ -18,14 +14,11 @@ import {
 export const profileKeys = {
   all: ['profile'] as const,
   business: () => [...profileKeys.all, 'business'] as const,
-  team: () => [...profileKeys.all, 'team'] as const,
   account: () => [...profileKeys.all, 'account'] as const,
   privacy: () => [...profileKeys.all, 'privacy'] as const,
   display: () => [...profileKeys.all, 'display'] as const,
   paymentMethods: () => [...profileKeys.all, 'payment-methods'] as const,
   billingHistory: (filters?: BillingHistoryFilters) => [...profileKeys.all, 'billing-history', filters] as const,
-  autoRecharge: () => [...profileKeys.all, 'auto-recharge'] as const,
-  taxInfo: () => [...profileKeys.all, 'tax-info'] as const,
 };
 
 // Business Profile Hooks
@@ -60,55 +53,6 @@ export function useUploadLogo() {
         return { ...old, logoUrl: data.url };
       });
     },
-  });
-}
-
-// Team Members Hooks
-export function useTeamMembers() {
-  return useQuery({
-    queryKey: profileKeys.team(),
-    queryFn: () => profileApi.getTeamMembers(),
-    staleTime: 30000, // 30 seconds
-  });
-}
-
-export function useInviteTeamMember() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: InviteTeamMemberRequest) => profileApi.inviteTeamMember(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.team() });
-    },
-  });
-}
-
-export function useUpdateTeamMember() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ memberId, data }: { memberId: string; data: UpdateTeamMemberRequest }) =>
-      profileApi.updateTeamMember(memberId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.team() });
-    },
-  });
-}
-
-export function useRemoveTeamMember() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (memberId: string) => profileApi.removeTeamMember(memberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.team() });
-    },
-  });
-}
-
-export function useResendInvitation() {
-  return useMutation({
-    mutationFn: (memberId: string) => profileApi.resendInvitation(memberId),
   });
 }
 
@@ -315,72 +259,6 @@ export function useExportBillingHistory() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    },
-  });
-}
-
-// Auto Recharge Hooks
-export function useAutoRechargeSettings() {
-  return useQuery({
-    queryKey: profileKeys.autoRecharge(),
-    queryFn: () => profileApi.getAutoRechargeSettings(),
-    staleTime: 60000, // 1 minute
-  });
-}
-
-export function useUpdateAutoRechargeSettings() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: AutoRechargeSettings) => profileApi.updateAutoRechargeSettings(data),
-    onMutate: async (newSettings) => {
-      await queryClient.cancelQueries({ queryKey: profileKeys.autoRecharge() });
-      const previousSettings = queryClient.getQueryData(profileKeys.autoRecharge());
-      queryClient.setQueryData(profileKeys.autoRecharge(), newSettings);
-      return { previousSettings };
-    },
-    onError: (err, newSettings, context) => {
-      if (context?.previousSettings) {
-        queryClient.setQueryData(profileKeys.autoRecharge(), context.previousSettings);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.autoRecharge() });
-    },
-  });
-}
-
-// Tax Information Hooks
-export function useTaxInformation() {
-  return useQuery({
-    queryKey: profileKeys.taxInfo(),
-    queryFn: () => profileApi.getTaxInformation(),
-    staleTime: 60000, // 1 minute
-  });
-}
-
-export function useUpdateTaxInformation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: TaxInformation) => profileApi.updateTaxInformation(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.taxInfo() });
-    },
-  });
-}
-
-export function useUploadTaxDocument() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (file: File) => profileApi.uploadTaxDocument(file),
-    onSuccess: (data) => {
-      // Update the tax information with the new document URL
-      queryClient.setQueryData(profileKeys.taxInfo(), (old: any) => {
-        if (!old) return old;
-        return { ...old, taxExemptDocumentUrl: data.url };
-      });
     },
   });
 }

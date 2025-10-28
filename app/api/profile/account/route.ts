@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       email: user.email,
       emailVerified: !!user.email_confirmed_at,
-      twoFactorEnabled: user.user_metadata?.twoFactorEnabled || false,
       createdAt: user.created_at,
       lastSignIn: user.last_sign_in_at,
     });

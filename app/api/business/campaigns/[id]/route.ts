@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { transformKeysToCamelCase } from '@/lib/utils';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -33,11 +34,8 @@ export async function GET(
       );
     }
 
-    const campaignId = params.id;
-
-    console.log('🔍 Fetching campaign:', campaignId);
-    console.log('🔍 User ID:', user.id);
-    console.log('🔍 User email:', user.email);
+    const { id } = await params;
+    const campaignId = id;
 
     // First, check if campaign exists at all
     const { data: campaignCheck, error: checkError } = await supabase
@@ -45,17 +43,6 @@ export async function GET(
       .select('id, title, business_id')
       .eq('id', campaignId)
       .single();
-
-    if (checkError || !campaignCheck) {
-      console.log('❌ Campaign does not exist in database');
-    } else {
-      console.log('✅ Campaign exists:', {
-        id: campaignCheck.id,
-        title: campaignCheck.title,
-        business_id: campaignCheck.business_id,
-        matches_user: campaignCheck.business_id === user.id,
-      });
-    }
 
     // Fetch campaign from Supabase
     const { data: campaign, error: campaignError } = await supabase
@@ -89,7 +76,27 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(campaign);
+    // Transform snake_case keys to camelCase for frontend
+    const transformedCampaign = transformKeysToCamelCase(campaign);
+
+    // Map database fields to frontend Campaign interface
+    const mappedCampaign = {
+      ...transformedCampaign,
+      type: transformedCampaign.campaignType || transformedCampaign.paymentType,
+      startDate: transformedCampaign.periodStart,
+      endDate: transformedCampaign.periodEnd,
+      budget: {
+        totalCredits: transformedCampaign.totalCredits || 0,
+        creditsPerCustomer: transformedCampaign.creditsPerCustomer || transformedCampaign.creditsPerAction,
+        creditsPerAction: transformedCampaign.creditsPerAction,
+        maxVisits: transformedCampaign.influencerSpots,
+        influencerSpots: transformedCampaign.influencerSpots,
+        influencerSpotsFilled: transformedCampaign.influencerSpotsFilled || 0,
+        rewardValue: transformedCampaign.rewardValue,
+      },
+    };
+
+    return NextResponse.json(mappedCampaign);
   } catch (error) {
     console.error('Campaign detail API error:', error);
     return NextResponse.json(
@@ -101,7 +108,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -128,7 +135,8 @@ export async function PUT(
       );
     }
 
-    const campaignId = params.id;
+    const { id } = await params;
+    const campaignId = id;
     const body = await request.json();
 
     // Update campaign in Supabase
@@ -163,7 +171,27 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(campaign);
+    // Transform snake_case keys to camelCase for frontend
+    const transformedCampaign = transformKeysToCamelCase(campaign);
+
+    // Map database fields to frontend Campaign interface
+    const mappedCampaign = {
+      ...transformedCampaign,
+      type: transformedCampaign.campaignType || transformedCampaign.paymentType,
+      startDate: transformedCampaign.periodStart,
+      endDate: transformedCampaign.periodEnd,
+      budget: {
+        totalCredits: transformedCampaign.totalCredits || 0,
+        creditsPerCustomer: transformedCampaign.creditsPerCustomer || transformedCampaign.creditsPerAction,
+        creditsPerAction: transformedCampaign.creditsPerAction,
+        maxVisits: transformedCampaign.influencerSpots,
+        influencerSpots: transformedCampaign.influencerSpots,
+        influencerSpotsFilled: transformedCampaign.influencerSpotsFilled || 0,
+        rewardValue: transformedCampaign.rewardValue,
+      },
+    };
+
+    return NextResponse.json(mappedCampaign);
   } catch (error) {
     console.error('Update campaign API error:', error);
     return NextResponse.json(
@@ -175,7 +203,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -202,7 +230,8 @@ export async function DELETE(
       );
     }
 
-    const campaignId = params.id;
+    const { id } = await params;
+    const campaignId = id;
 
     // Delete campaign from Supabase
     const { error: deleteError } = await supabase

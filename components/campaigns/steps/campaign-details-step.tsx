@@ -31,7 +31,7 @@ export function CampaignDetailsStep({
 
   // Force visibility to public for rewards campaigns
   React.useEffect(() => {
-    if (campaignType === CampaignType.REWARDS) {
+    if (campaignType === CampaignType.LOYALTY_REWARD) {
       form.setValue('visibility', 'public');
     }
   }, [campaignType]);
@@ -49,7 +49,7 @@ export function CampaignDetailsStep({
         defaultDate.setHours(12, 0, 0, 0);
         form.setValue('eventDate', defaultDate);
       }
-    } else if (campaignType === CampaignType.REWARDS) {
+    } else if (campaignType === CampaignType.LOYALTY_REWARD) {
       form.setValue('budget.totalCredits', 0);
       form.setValue('budget.influencerSpots', 0);
     }
@@ -66,7 +66,7 @@ export function CampaignDetailsStep({
 
       <div className="space-y-6">
         {/* Visibility Toggle */}
-        {campaignType !== CampaignType.REWARDS && (
+        {campaignType !== CampaignType.LOYALTY_REWARD && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Campaign Visibility</CardTitle>
@@ -317,7 +317,7 @@ export function CampaignDetailsStep({
               </>
             )}
 
-            {campaignType === CampaignType.REWARDS && (
+            {campaignType === CampaignType.LOYALTY_REWARD && (
               <>
                 <div className="rounded-lg bg-green-50 p-4">
                   <div className="flex items-center">

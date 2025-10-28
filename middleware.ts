@@ -8,16 +8,74 @@ const protectedRoutes = [
   '/profile',
   '/influencers',
   '/settings',
-  '/team',
   '/billing',
 ];
+
+// Admin routes that require admin authentication and authorization
+const adminRoutes = ['/admin'];
 
 // Routes that should redirect to campaigns if already authenticated
 const authRoutes = ['/login', '/register'];
 
+// Admin login route
+const adminLoginRoute = '/admin/login';
+
+/**
+ * Middleware for route protection and authentication
+ *
+ * SECURITY FEATURES:
+ * - Separate admin and user authentication flows
+ * - Admin route protection with role verification
+ * - Session validation via cookies
+ * - Automatic redirects for unauthorized access
+ */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Check if this is an admin route
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+
+  // Check if this is the admin login page
+  const isAdminLoginRoute = pathname === adminLoginRoute;
+
+  // ADMIN ROUTE HANDLING
+  if (isAdminRoute && !isAdminLoginRoute) {
+    // Get admin token from cookie
+    const adminToken = request.cookies.get('admin_token')?.value;
+    const adminRole = request.cookies.get('admin_role')?.value;
+
+    // Redirect to admin login if not authenticated
+    if (!adminToken) {
+      const loginUrl = new URL(adminLoginRoute, request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Add admin headers for API routes
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-admin-auth', 'true');
+    if (adminRole) {
+      requestHeaders.set('x-admin-role', adminRole);
+    }
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  // Prevent accessing admin login when already authenticated as admin
+  if (isAdminLoginRoute) {
+    const adminToken = request.cookies.get('admin_token')?.value;
+    if (adminToken) {
+      return NextResponse.redirect(new URL('/admin/withdrawals', request.url));
+    }
+    // Allow access to admin login page
+    return NextResponse.next();
+  }
+
+  // REGULAR USER ROUTE HANDLING
   // Get token from cookie or authorization header
   const token =
     request.cookies.get('auth_token')?.value ||

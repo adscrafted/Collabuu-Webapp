@@ -6,7 +6,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -33,7 +33,8 @@ export async function PUT(
       );
     }
 
-    const campaignId = params.id;
+    const { id } = await params;
+    const campaignId = id;
     const { status } = await request.json();
 
     // Update campaign status in Supabase

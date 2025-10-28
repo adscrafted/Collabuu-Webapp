@@ -12,7 +12,7 @@ import {
 interface IOSCampaignPayload {
   title: string;
   description: string;
-  paymentType: 'pay_per_customer' | 'media_event' | 'rewards';
+  paymentType: 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward';
   visibility: 'public' | 'private';
   status: 'active' | 'draft';
   requirements: string;
@@ -98,8 +98,36 @@ export const campaignsApi = {
 
   // Get single campaign by ID
   getCampaign: async (id: string): Promise<CampaignWithStats> => {
-    const response = await apiClient.get<CampaignWithStats>(`/api/business/campaigns/${id}`);
-    return response.data;
+    const response = await apiClient.get<any>(`/api/business/campaigns/${id}`);
+    const campaign = response.data;
+
+    // Transform to match expected Campaign format (same as getCampaigns)
+    return {
+      id: campaign.id,
+      businessId: campaign.businessId,
+      type: campaign.type,
+      status: campaign.status,
+      title: campaign.title,
+      description: campaign.description,
+      imageUrl: campaign.imageUrl,
+      startDate: campaign.periodStart || campaign.startDate,
+      endDate: campaign.periodEnd || campaign.endDate,
+      eventDate: campaign.eventDate,
+      budget: campaign.budget || {
+        totalCredits: campaign.totalCredits || 0,
+      },
+      requirements: campaign.requirements,
+      visibility: campaign.visibility || 'public',
+      shareLink: campaign.shareLink,
+      influencerCount: campaign.influencerCount,
+      createdAt: campaign.createdAt,
+      updatedAt: campaign.updatedAt,
+      stats: {
+        participantsCount: 0,
+        visitsCount: 0,
+        creditsSpent: 0,
+      },
+    };
   },
 
   // Create new campaign (accepts iOS-formatted payload)

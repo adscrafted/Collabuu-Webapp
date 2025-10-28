@@ -86,7 +86,7 @@ export function BudgetCalculator({
             </>
           )}
 
-          {campaignType === CampaignType.REWARDS && (
+          {campaignType === CampaignType.LOYALTY_REWARD && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-700">Campaign cost:</span>
               <span className="font-semibold text-green-600">

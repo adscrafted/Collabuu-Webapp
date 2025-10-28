@@ -79,22 +79,22 @@ export function Features() {
           />
           <HighlightCard
             title="Collaboration Tools"
-            description="Streamline your workflow with built-in tools designed specifically for influencer marketing teams."
+            description="Streamline your workflow with built-in tools designed specifically for influencer marketing."
             features={[
-              'Team collaboration workspace',
               'Content approval workflows',
               'Shared media library',
               'Task management system',
+              'Real-time notifications',
             ]}
           />
           <HighlightCard
             title="Enterprise Ready"
-            description="Scale your influencer marketing with features built for teams and large organizations."
+            description="Scale your influencer marketing with powerful features built for growing businesses."
             features={[
-              'Multi-user accounts',
               'Custom approval workflows',
               'API access',
               'Dedicated account manager',
+              'Priority support',
             ]}
           />
         </div>

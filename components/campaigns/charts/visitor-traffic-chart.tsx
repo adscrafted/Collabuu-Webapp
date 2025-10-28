@@ -2,16 +2,31 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
+import { TrendingUp } from 'lucide-react';
 
 interface VisitorTrafficChartProps {
   data: {
     date: string;
     visits: number;
-    views: number;
   }[];
 }
 
 export function VisitorTrafficChart({ data }: VisitorTrafficChartProps) {
+  // Show empty state when there's no data
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[350px] text-center">
+        <div className="rounded-full bg-gray-100 p-4 mb-4">
+          <TrendingUp className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No visitor data yet</h3>
+        <p className="text-sm text-gray-600 max-w-md">
+          Visitor traffic data will appear here once your campaign starts receiving visits from customers.
+        </p>
+      </div>
+    );
+  }
+
   const formattedData = data.map((item) => ({
     ...item,
     date: format(new Date(item.date), 'MMM d'),
@@ -54,15 +69,6 @@ export function VisitorTrafficChart({ data }: VisitorTrafficChartProps) {
           dot={{ fill: '#3B82F6', r: 4 }}
           activeDot={{ r: 6 }}
           name="Visits"
-        />
-        <Line
-          type="monotone"
-          dataKey="views"
-          stroke="#10B981"
-          strokeWidth={2}
-          dot={{ fill: '#10B981', r: 4 }}
-          activeDot={{ r: 6 }}
-          name="Views"
         />
       </LineChart>
     </ResponsiveContainer>

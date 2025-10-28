@@ -1,8 +1,8 @@
 'use client';
 
 import { format, parseISO, startOfDay } from 'date-fns';
-import { Calendar, Tag, TrendingUp, Users, CreditCard, Target, Smartphone, UserCheck, CalendarClock, Eye } from 'lucide-react';
-import { useCampaignMetrics, useCampaignVisits } from '@/lib/hooks/use-campaign-detail';
+import { Calendar, Tag, TrendingUp, Users, Target, Smartphone, UserCheck, CalendarClock, Eye, Camera } from 'lucide-react';
+import { useCampaignMetrics, useCampaignVisits, useCampaignApplications, useContentSubmissions } from '@/lib/hooks/use-campaign-detail';
 import { Campaign, CampaignType } from '@/lib/types/campaign';
 import {
   getCampaignTypeLabel,
@@ -23,12 +23,18 @@ import { VisitorTrafficChart } from '@/components/campaigns/charts/visitor-traff
 interface OverviewTabProps {
   campaign: Campaign;
   campaignId: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
+export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabProps) {
   const { toast } = useToast();
   const { data: metrics, isLoading: metricsLoading } = useCampaignMetrics(campaignId);
   const { data: visits, isLoading: visitsLoading } = useCampaignVisits(campaignId);
+  const { data: applications, isLoading: applicationsLoading } = useCampaignApplications(campaignId);
+  const { data: contentSubmissions, isLoading: contentLoading } = useContentSubmissions(campaignId);
+
+  // Count pending applications
+  const pendingApplicationsCount = applications?.filter(app => app.status === 'pending').length || 0;
 
   const formatCampaignDate = (dateString: string | undefined): string | null => {
     if (!dateString) return null;
@@ -54,18 +60,17 @@ export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
     const visitsByDate = visits.reduce((acc, visit) => {
       const date = format(startOfDay(parseISO(visit.visitDate)), 'yyyy-MM-dd');
       if (!acc[date]) {
-        acc[date] = { visits: 0, views: 0 };
+        acc[date] = { visits: 0 };
       }
       acc[date].visits += 1;
       return acc;
-    }, {} as Record<string, { visits: number; views: number }>);
+    }, {} as Record<string, { visits: number }>);
 
     // Convert to array and sort by date
     return Object.entries(visitsByDate)
       .map(([date, data]) => ({
         date,
         visits: data.visits,
-        views: data.views,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
   };
@@ -160,52 +165,32 @@ export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
       </Card>
 
         {/* Metrics Grid - Campaign Type Specific */}
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {/* Primary Metric - Changes based on campaign type */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Actual Visitors Card */}
           <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                {campaign.type === CampaignType.REWARDS
-                  ? 'Actual Visitors'
-                  : campaign.type === CampaignType.MEDIA_EVENT
-                  ? 'Influencer Spots'
-                  : 'Total Visitors'}
+                Actual Visitors
               </CardTitle>
               <div className="rounded-full bg-blue-100 p-2">
-                <Users className="h-4 w-4 text-blue-600" />
+                <UserCheck className="h-4 w-4 text-blue-600" />
               </div>
             </CardHeader>
             <CardContent>
               {metricsLoading ? (
                 <Skeleton className="h-8 w-20" />
-              ) : campaign.type === CampaignType.MEDIA_EVENT ? (
-                <>
-                  <div className="text-3xl font-bold text-gray-900">
-                    {getInfluencerSpotsText(campaign) || '0 / 0'}
-                  </div>
-                  <p className="mt-1 text-xs text-gray-600">spots filled</p>
-                </>
-              ) : campaign.type === CampaignType.REWARDS ? (
-                <>
-                  <div className="text-3xl font-bold text-gray-900">{(metrics?.totalVisits ?? 0).toLocaleString()}</div>
-                  <p className="mt-1 text-xs text-gray-600">customers visited</p>
-                </>
               ) : (
                 <>
                   <div className="text-3xl font-bold text-gray-900">{(metrics?.totalVisits ?? 0).toLocaleString()}</div>
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <div className="flex items-center gap-1.5 text-blue-600">
-                        <UserCheck className="h-3.5 w-3.5" />
-                        <span className="font-medium">From Influencers:</span>
-                      </div>
+                  <div className="mt-3 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                      <UserCheck className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                      <span className="font-medium text-blue-600">From Influencers:</span>
                       <span className="font-bold text-gray-900">{(metrics?.influencerVisitorCount ?? 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <div className="flex items-center gap-1.5 text-green-600">
-                        <Smartphone className="h-3.5 w-3.5" />
-                        <span className="font-medium">Direct from App:</span>
-                      </div>
+                    <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                      <Smartphone className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                      <span className="font-medium text-green-600">Direct from App:</span>
                       <span className="font-bold text-gray-900">{(metrics?.directAppVisitorCount ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
@@ -214,67 +199,76 @@ export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
             </CardContent>
           </Card>
 
-          {/* Participants - Hidden for REWARDS */}
-          {campaign.type !== CampaignType.REWARDS && (
-            <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Participants</CardTitle>
-                <div className="rounded-full bg-purple-100 p-2">
-                  <Target className="h-4 w-4 text-purple-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {metricsLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-gray-900">{metrics?.totalParticipants || 0}</div>
-                    <p className="mt-1 text-xs text-gray-600">
+          {/* Influencers Card */}
+          <Card
+            className="shadow-sm border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => onTabChange?.('influencers')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Influencers</CardTitle>
+              <div className="rounded-full bg-purple-100 p-2">
+                <Users className="h-4 w-4 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {metricsLoading || applicationsLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {metrics?.totalParticipants || 0}/{campaign.budget?.influencerSpots || 0}
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-xs text-gray-600">
                       Active influencers
                     </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                    {pendingApplicationsCount > 0 && (
+                      <p className="text-xs text-orange-600 font-medium">
+                        {pendingApplicationsCount} pending approval
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Credits - Special handling for each type */}
-          {campaign.type !== CampaignType.REWARDS && (
-            <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {campaign.type === CampaignType.MEDIA_EVENT ? 'Event Credits' : 'Credits Spent'}
-                </CardTitle>
-                <div className="rounded-full bg-orange-100 p-2">
-                  <CreditCard className="h-4 w-4 text-orange-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {metricsLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : campaign.type === CampaignType.MEDIA_EVENT ? (
-                  <>
-                    <div className="text-3xl font-bold text-gray-900">
-                      {getMediaEventCredits()}
-                    </div>
-                    <p className="mt-1 text-xs text-gray-600">fixed price</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-gray-900">
-                      {(metrics?.creditsSpent || 0).toLocaleString()}
-                    </div>
-                    <p className="mt-1 text-xs text-gray-600">
-                      of {(campaign.budget?.totalCredits || 0).toLocaleString()} total
+          {/* Content Card */}
+          <Card
+            className="shadow-sm border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => onTabChange?.('content')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Content</CardTitle>
+              <div className="rounded-full bg-pink-100 p-2">
+                <Camera className="h-4 w-4 text-pink-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {contentLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {contentSubmissions?.length || 0}
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-xs text-gray-600">
+                      Total submissions
                     </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                    {contentSubmissions && contentSubmissions.filter(s => s.status === 'new').length > 0 && (
+                      <p className="text-xs text-orange-600 font-medium">
+                        {contentSubmissions.filter(s => s.status === 'new').length} new
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Reward Value - Only shown for REWARDS campaigns */}
-          {campaign.type === CampaignType.REWARDS && (
+          {campaign.type === CampaignType.LOYALTY_REWARD && (
             <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
@@ -299,22 +293,6 @@ export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
             </Card>
           )}
         </div>
-
-        {/* WEB-ONLY FEATURE: Charts - Visitors Over Time */}
-        {/* iOS does not have any charts - this is a web-exclusive data visualization feature */}
-        <Card className="shadow-sm border-gray-200">
-          <CardHeader>
-            <CardTitle>Visitors Over Time</CardTitle>
-            <CardDescription>Daily visitor traffic to your campaign</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {visitsLoading ? (
-              <Skeleton className="h-[350px] w-full" />
-            ) : (
-              <VisitorTrafficChart data={getVisitorChartData()} />
-            )}
-          </CardContent>
-        </Card>
 
         {/* Budget & Credit Breakdown - Conditional based on campaign type */}
         {shouldShowCreditBreakdown(campaign) && (
@@ -349,7 +327,41 @@ export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
                     </div>
                   )}
 
-                  <div className="grid gap-6 sm:grid-cols-3">
+                  {/* Visitor Attribution Breakdown (matching iOS) */}
+                  {metrics && (metrics.influencerVisitorCount > 0 || metrics.directAppVisitorCount > 0) && (
+                    <div className="space-y-3 rounded-lg bg-gray-50 p-4 border border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-900">Visitor Attribution</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-blue-600" />
+                            <span className="text-gray-700">From Influencers</span>
+                          </div>
+                          <span className="font-semibold text-gray-900">
+                            {metrics.influencerVisitorCount.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <Smartphone className="h-4 w-4 text-green-600" />
+                            <span className="text-gray-700">Direct from App</span>
+                          </div>
+                          <span className="font-semibold text-gray-900">
+                            {metrics.directAppVisitorCount.toLocaleString()}
+                          </span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex items-center justify-between text-sm font-semibold">
+                          <span className="text-gray-900">Total Visitors</span>
+                          <span className="text-gray-900">
+                            {(metrics.influencerVisitorCount + metrics.directAppVisitorCount).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-6 sm:grid-cols-2">
                     {campaign.type === CampaignType.MEDIA_EVENT ? (
                       <div className="space-y-1">
                         <p className="text-sm text-gray-600">Fixed Event Price</p>
@@ -375,65 +387,34 @@ export function OverviewTab({ campaign, campaignId }: OverviewTabProps) {
                             <p className="text-xs text-gray-500">credits per visit</p>
                           </div>
                         )}
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-600">Remaining Credits</p>
-                          <p className="text-3xl font-bold text-gray-900">
-                            {((campaign.budget?.totalCredits || 0) - (metrics?.creditsSpent || 0)).toLocaleString()}
-                          </p>
-                        </div>
                       </>
                     )}
                   </div>
 
-                  {campaign.type !== CampaignType.MEDIA_EVENT && (
-                    <>
-                      <Separator />
-
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-4">Visitor Attribution Breakdown</h4>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
-                            <div className="rounded-full bg-blue-100 p-2 flex-shrink-0">
-                              <UserCheck className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-blue-900 mb-1">Total Visitors from Influencers</p>
-                              <p className="text-2xl font-bold text-blue-900">{(metrics?.influencerVisitorCount ?? 0).toLocaleString()}</p>
-                              <p className="text-xs text-blue-700 mt-1">
-                                {metrics?.totalVisits
-                                  ? `${(((metrics.influencerVisitorCount || 0) / metrics.totalVisits) * 100).toFixed(1)}%`
-                                  : '0%'}{' '}
-                                of total traffic
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3 p-4 rounded-lg bg-green-50 border border-green-100">
-                            <div className="rounded-full bg-green-100 p-2 flex-shrink-0">
-                              <Smartphone className="h-5 w-5 text-green-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-green-900 mb-1">Total Visitors Direct from App</p>
-                              <p className="text-2xl font-bold text-green-900">{(metrics?.directAppVisitorCount ?? 0).toLocaleString()}</p>
-                              <p className="text-xs text-green-700 mt-1">
-                                {metrics?.totalVisits
-                                  ? `${(((metrics.directAppVisitorCount || 0) / metrics.totalVisits) * 100).toFixed(1)}%`
-                                  : '0%'}{' '}
-                                of total traffic
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </>
               )}
             </CardContent>
           </Card>
         )}
 
+        {/* WEB-ONLY FEATURE: Charts - Visitors Over Time */}
+        {/* iOS does not have any charts - this is a web-exclusive data visualization feature */}
+        <Card className="shadow-sm border-gray-200">
+          <CardHeader>
+            <CardTitle>Visitors Over Time</CardTitle>
+            <CardDescription>Daily visitor traffic to your campaign</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {visitsLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <VisitorTrafficChart data={getVisitorChartData()} />
+            )}
+          </CardContent>
+        </Card>
+
         {/* Rewards Campaign Details */}
-        {campaign.type === CampaignType.REWARDS && (
+        {campaign.type === CampaignType.LOYALTY_REWARD && (
           <Card className="shadow-sm border-gray-200">
             <CardHeader>
               <CardTitle>Reward Details</CardTitle>

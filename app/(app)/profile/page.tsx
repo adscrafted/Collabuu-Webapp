@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, Users, CreditCard, Save, AlertTriangle, Loader2, User } from 'lucide-react';
+import { Building2, CreditCard, Save, AlertTriangle, Loader2, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { BusinessProfileTab } from '@/components/profile/business-profile-tab';
 import { AccountTab } from '@/components/profile/account-tab';
-import { TeamMembersTab } from '@/components/profile/team-members-tab';
 import { BillingTab } from '@/components/profile/billing-tab';
 import { useUpdateBusinessProfile } from '@/lib/hooks/use-profile';
 import { useToast } from '@/components/ui/use-toast';
@@ -31,7 +30,7 @@ function ProfilePageContent() {
 
   // Get active tab from URL query parameter, default to 'business'
   const tabParam = searchParams.get('tab');
-  const activeTab = tabParam && ['business', 'account', 'team', 'billing'].includes(tabParam)
+  const activeTab = tabParam && ['business', 'account', 'billing'].includes(tabParam)
     ? tabParam
     : 'business';
 
@@ -100,7 +99,7 @@ function ProfilePageContent() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
           <p className="text-gray-500 mt-1">
-            Manage your business profile, account settings, and team
+            Manage your business profile and account settings
           </p>
         </div>
       </div>
@@ -140,20 +139,6 @@ function ProfilePageContent() {
               </TabsTrigger>
 
               <TabsTrigger
-                value="team"
-                className={cn(
-                  'relative h-14 rounded-none border-b-2 border-transparent px-0 pb-3 pt-3',
-                  'hover:border-gray-300 hover:text-gray-700',
-                  'data-[state=active]:border-pink-500 data-[state=active]:text-pink-600',
-                  'data-[state=active]:shadow-none',
-                  'transition-colors'
-                )}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Team Members
-              </TabsTrigger>
-
-              <TabsTrigger
                 value="billing"
                 className={cn(
                   'relative h-14 rounded-none border-b-2 border-transparent px-0 pb-3 pt-3',
@@ -180,10 +165,6 @@ function ProfilePageContent() {
 
             <TabsContent value="account" className="mt-0">
               <AccountTab />
-            </TabsContent>
-
-            <TabsContent value="team" className="mt-0">
-              <TeamMembersTab />
             </TabsContent>
 
             <TabsContent value="billing" className="mt-0">

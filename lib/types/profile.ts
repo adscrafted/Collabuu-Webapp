@@ -51,44 +51,6 @@ export interface SocialMedia {
   linkedin?: string;
 }
 
-export interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  role: TeamMemberRole;
-  permissions: TeamPermission[];
-  status: TeamMemberStatus;
-  invitedAt?: string;
-  joinedAt?: string;
-  invitedBy?: string;
-}
-
-export type TeamMemberRole = 'owner' | 'admin' | 'editor';
-export type TeamMemberStatus = 'active' | 'pending';
-
-export const TEAM_PERMISSIONS = [
-  'manage_campaigns',
-  'approve_influencers',
-  'manage_billing',
-  'manage_team',
-] as const;
-
-export type TeamPermission = typeof TEAM_PERMISSIONS[number];
-
-export interface InviteTeamMemberRequest {
-  email: string;
-  role: TeamMemberRole;
-}
-
-export interface UpdateTeamMemberRequest {
-  role?: TeamMemberRole;
-}
-
-export interface RemoveTeamMemberRequest {
-  memberId: string;
-  reason?: string;
-}
 
 export interface PrivacySettings {
   profileVisibility: ProfileVisibility;
@@ -120,6 +82,17 @@ export interface AccountSettings {
   twoFactorEnabled: boolean;
 }
 
+export interface PaymentMethod {
+  id: string;
+  type: 'card' | 'bank_account';
+  brand?: string;
+  last4: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
@@ -135,17 +108,6 @@ export interface RequestEmailChangeRequest {
   newEmail: string;
 }
 
-export interface PaymentMethod {
-  id: string;
-  type: 'card' | 'bank_account';
-  brand?: string;
-  last4: string;
-  expiryMonth?: number;
-  expiryYear?: number;
-  isDefault: boolean;
-  createdAt: string;
-}
-
 export interface BillingHistoryItem {
   id: string;
   date: string;
@@ -158,20 +120,6 @@ export interface BillingHistoryItem {
 }
 
 export type BillingStatus = 'paid' | 'pending' | 'failed' | 'refunded';
-
-export interface AutoRechargeSettings {
-  enabled: boolean;
-  threshold: number;
-  packageId: string;
-  packageCredits: number;
-  packageAmount: number;
-}
-
-export interface TaxInformation {
-  businessTaxId?: string;
-  taxExempt: boolean;
-  taxExemptDocumentUrl?: string;
-}
 
 export interface UpdateBusinessProfileRequest {
   businessName?: string;
@@ -283,25 +231,3 @@ export const DEFAULT_BUSINESS_HOURS: BusinessHours = {
   sunday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
 };
 
-// Role Display Names
-export const ROLE_DISPLAY_NAMES: Record<TeamMemberRole, string> = {
-  owner: 'Owner',
-  admin: 'Admin',
-  editor: 'Editor',
-};
-
-// Permission Display Names
-export const PERMISSION_DISPLAY_NAMES: Record<TeamPermission, string> = {
-  manage_campaigns: 'Manage Campaigns',
-  approve_influencers: 'Approve Influencers',
-  manage_billing: 'Manage Billing',
-  manage_team: 'Manage Team',
-};
-
-// Permission Descriptions
-export const PERMISSION_DESCRIPTIONS: Record<TeamPermission, string> = {
-  manage_campaigns: 'Create, edit, and delete campaigns',
-  approve_influencers: 'Approve or reject influencer applications',
-  manage_billing: 'Add payment methods and view billing history',
-  manage_team: 'Invite, edit, and remove team members',
-};

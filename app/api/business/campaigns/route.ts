@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { transformKeysToCamelCase } from '@/lib/utils';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -67,8 +68,63 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Transform snake_case keys to camelCase for frontend
+    const transformedCampaigns = transformKeysToCamelCase(campaigns || []);
+
+    // Fetch stats for each campaign
+    const campaignsWithStats = await Promise.all(
+      transformedCampaigns.map(async (campaign: any) => {
+        // Count total visits
+        const { count: visitsCount } = await supabase
+          .from('visits')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', campaign.id);
+
+        // Count accepted participants
+        const { count: participantsCount } = await supabase
+          .from('campaign_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', campaign.id)
+          .eq('status', 'accepted');
+
+        // Sum credits spent
+        const { data: creditsData } = await supabase
+          .from('visits')
+          .select('credits_awarded')
+          .eq('campaign_id', campaign.id)
+          .eq('status', 'verified');
+
+        const creditsSpent = creditsData?.reduce((sum, visit) => sum + (visit.credits_awarded || 0), 0) || 0;
+
+        // Count accepted influencers (same as participants for now)
+        const acceptedInfluencersCount = participantsCount || 0;
+
+        return {
+          ...campaign,
+          type: campaign.campaignType || campaign.paymentType,
+          startDate: campaign.periodStart,
+          endDate: campaign.periodEnd,
+          budget: {
+            totalCredits: campaign.totalCredits || 0,
+            creditsPerCustomer: campaign.creditsPerCustomer || campaign.creditsPerAction,
+            creditsPerAction: campaign.creditsPerAction,
+            maxVisits: campaign.influencerSpots,
+            influencerSpots: campaign.influencerSpots,
+            influencerSpotsFilled: campaign.influencerSpotsFilled || 0,
+            rewardValue: campaign.rewardValue,
+          },
+          stats: {
+            visitsCount: visitsCount || 0,
+            participantsCount: participantsCount || 0,
+            creditsSpent,
+            acceptedInfluencersCount,
+          },
+        };
+      })
+    );
+
     // Return campaigns array (webapp expects array, not wrapped object)
-    return NextResponse.json(campaigns || []);
+    return NextResponse.json(campaignsWithStats);
   } catch (error) {
     console.error('Campaigns API error:', error);
     return NextResponse.json(
@@ -107,9 +163,6 @@ export async function POST(request: NextRequest) {
     // Get request body
     const body = await request.json();
 
-    console.log('📝 Creating campaign for user:', user.id);
-    console.log('📝 Request body:', JSON.stringify(body, null, 2));
-
     // Create campaign in Supabase
     const campaignData = {
       business_id: user.id,
@@ -130,8 +183,6 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    console.log('💾 Inserting campaign data:', JSON.stringify(campaignData, null, 2));
-
     const { data: campaign, error: createError } = await supabase
       .from('campaigns')
       .insert(campaignData)
@@ -151,8 +202,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Campaign created successfully:', campaign);
-    return NextResponse.json(campaign);
+    // Transform snake_case keys to camelCase for frontend
+    const transformedCampaign = transformKeysToCamelCase(campaign);
+
+    // Map database fields to frontend Campaign interface
+    const mappedCampaign = {
+      ...transformedCampaign,
+      type: transformedCampaign.campaignType || transformedCampaign.paymentType,
+      startDate: transformedCampaign.periodStart,
+      endDate: transformedCampaign.periodEnd,
+    };
+
+    return NextResponse.json(mappedCampaign);
   } catch (error) {
     console.error('❌ Create campaign API error:', error);
     console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');

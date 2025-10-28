@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { TEAM_PERMISSIONS } from '../types/profile';
 
 // Business Profile Schema
 export const businessProfileSchema = z.object({
@@ -36,14 +35,6 @@ export const socialMediaSchema = z.object({
 });
 
 export type SocialMediaFormData = z.infer<typeof socialMediaSchema>;
-
-// Team Member Invitation Schema
-export const inviteTeamMemberSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['admin', 'editor'], { message: 'Please select a role' }),
-});
-
-export type InviteTeamMemberFormData = z.infer<typeof inviteTeamMemberSchema>;
 
 // Password Change Schema
 export const passwordSchema = z.string()

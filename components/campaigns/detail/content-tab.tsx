@@ -1,7 +1,5 @@
 'use client';
-
-import { useState } from 'react';
-import { Video, Filter, Eye, CheckCircle } from 'lucide-react';
+import { Video, Eye, CheckCircle } from 'lucide-react';
 import {
   useContentSubmissions,
   useMarkContentViewed,
@@ -13,25 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { ContentSubmissionCard } from '@/components/campaigns/content-submission-card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface ContentTabProps {
   campaignId: string;
 }
 
-type FilterOption = 'all' | 'new' | 'viewed' | 'approved';
-type SortOption = 'recent' | 'oldest' | 'platform';
-
 export function ContentTab({ campaignId }: ContentTabProps) {
   const { toast } = useToast();
-  const [filter, setFilter] = useState<FilterOption>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('recent');
 
   // Queries
   const { data: submissions, isLoading } = useContentSubmissions(campaignId);
@@ -53,7 +39,7 @@ export function ContentTab({ campaignId }: ContentTabProps) {
   };
 
   const handleMarkAllViewed = async () => {
-    const newSubmissions = filteredSubmissions.filter((s) => s.status === 'new');
+    const newSubmissions = submissions?.filter((s) => s.status === 'new') || [];
 
     if (newSubmissions.length === 0) {
       toast({
@@ -109,86 +95,19 @@ export function ContentTab({ campaignId }: ContentTabProps) {
   };
 
 
-  // Filter submissions
-  const filteredSubmissions = submissions
-    ? submissions.filter((submission) => {
-        if (filter === 'all') return true;
-        return submission.status === filter;
-      })
+  // Sort submissions by most recent
+  const sortedSubmissions = submissions
+    ? [...submissions].sort((a, b) =>
+        new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+      )
     : [];
-
-  // Sort submissions
-  const sortedSubmissions = [...filteredSubmissions].sort((a, b) => {
-    switch (sortBy) {
-      case 'oldest':
-        return new Date(a.postedAt).getTime() - new Date(b.postedAt).getTime();
-      case 'platform':
-        return a.platform.localeCompare(b.platform);
-      case 'recent':
-      default:
-        return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
-    }
-  });
 
   // Count stats
   const newCount = submissions?.filter((s) => s.status === 'new').length || 0;
   const viewedCount = submissions?.filter((s) => s.status === 'viewed').length || 0;
-  const approvedCount = submissions?.filter((s) => s.status === 'approved').length || 0;
 
   return (
     <div className="space-y-8">
-      {/* Stats Cards */}
-      <div className="grid gap-6 sm:grid-cols-3">
-        <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Submissions
-            </CardTitle>
-            <div className="rounded-full bg-blue-100 p-2">
-              <Video className="h-4 w-4 text-blue-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">
-              {submissions?.length || 0}
-            </div>
-            <p className="mt-1 text-xs text-gray-600">All content submitted</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              New Content
-            </CardTitle>
-            <div className="rounded-full bg-red-100 p-2">
-              <Badge className="h-6 w-6 flex items-center justify-center bg-red-600 p-0">
-                {newCount}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{newCount}</div>
-            <p className="mt-1 text-xs text-gray-600">Unviewed submissions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Approved
-            </CardTitle>
-            <div className="rounded-full bg-green-100 p-2">
-              <Eye className="h-4 w-4 text-green-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{approvedCount}</div>
-            <p className="mt-1 text-xs text-gray-600">Content approved</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Header & Filters */}
       <Card className="shadow-sm border-gray-200">
         <CardHeader>
@@ -200,38 +119,6 @@ export function ContentTab({ campaignId }: ContentTabProps) {
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-                <SelectTrigger className="w-[160px] shadow-sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    All ({submissions?.length || 0})
-                  </SelectItem>
-                  <SelectItem value="new">
-                    New ({newCount})
-                  </SelectItem>
-                  <SelectItem value="viewed">
-                    Viewed ({viewedCount})
-                  </SelectItem>
-                  <SelectItem value="approved">
-                    Approved ({approvedCount})
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="w-[160px] shadow-sm">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="platform">By Platform</SelectItem>
-                </SelectContent>
-              </Select>
-
               {newCount > 0 && (
                 <Button
                   variant="outline"
@@ -286,14 +173,10 @@ export function ContentTab({ campaignId }: ContentTabProps) {
               <Video className="h-16 w-16 text-gray-400" />
             </div>
             <h3 className="mb-2 text-xl font-semibold text-gray-900">
-              {filter === 'all'
-                ? 'No Content Submissions Yet'
-                : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Content`}
+              No Content Submissions Yet
             </h3>
             <p className="text-center text-sm text-gray-600 max-w-md">
-              {filter === 'all'
-                ? 'Content from influencers will appear here when they submit their work'
-                : `Content marked as "${filter}" will appear here`}
+              Content from influencers will appear here when they submit their work
             </p>
           </CardContent>
         </Card>

@@ -52,50 +52,19 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       if (typeof window !== 'undefined') {
-        // Try to refresh token
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          try {
-            const response = await axios.post(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
-              { refreshToken }
-            );
+        // Clear all auth data and redirect to login
+        // Token refresh is handled automatically by Supabase
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('business_id');
+        localStorage.removeItem('auth-storage'); // Clear Zustand persisted state
 
-            const { accessToken } = response.data;
-            localStorage.setItem('auth_token', accessToken);
+        // Clear cookies
+        document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'business_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-            // Retry original request with new token
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return apiClient(originalRequest);
-          } catch (refreshError) {
-            // Refresh failed, clear all auth data
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('business_id');
-            localStorage.removeItem('auth-storage'); // Clear Zustand persisted state
-
-            // Clear cookies
-            document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'business_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-            // Redirect to login
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
-          }
-        } else {
-          // No refresh token available, clear all auth data
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('business_id');
-          localStorage.removeItem('auth-storage'); // Clear Zustand persisted state
-
-          // Clear cookies
-          document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'business_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-          // Redirect to login
-          window.location.href = '/login';
-        }
+        // Redirect to login
+        window.location.href = '/login';
       }
     }
 

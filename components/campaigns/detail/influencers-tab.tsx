@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, Users, Filter, UserCheck, AlertCircle, Search, X } from 'lucide-react';
+import { CheckCircle, Users, UserCheck, AlertCircle, Search, X, UserPlus } from 'lucide-react';
 import {
   useCampaignApplications,
   useCampaignParticipants,
@@ -21,13 +21,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { InfluencerApplicationCard } from '@/components/campaigns/influencer-application-card';
 import { ParticipantCard } from '@/components/campaigns/participant-card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { InviteInfluencersDialog } from '@/components/campaigns/invite-influencers-dialog';
 
 interface InfluencersTabProps {
   campaignId: string;
@@ -36,8 +30,9 @@ interface InfluencersTabProps {
 
 export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
   const { toast } = useToast();
-  const [sortBy, setSortBy] = useState<'recent' | 'followers' | 'performance'>('recent');
+  const [sortBy, setSortBy] = useState<'recent' | 'performance'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
 
   // Queries
   const { data: applications, isLoading: applicationsLoading } =
@@ -61,6 +56,14 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
     const query = searchQuery.toLowerCase();
     const nameMatch = app.influencerName?.toLowerCase().includes(query);
     return nameMatch;
+  }).sort((a, b) => {
+    // Sort like iOS: applications before invitations, then by date
+    if (a.applicationType !== b.applicationType) {
+      if (a.applicationType === 'application') return -1;
+      if (b.applicationType === 'application') return 1;
+    }
+    // Within same type, sort by date (newest first)
+    return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
   });
 
   const handleAccept = async (applicationId: string) => {
@@ -145,8 +148,6 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
   const sortedParticipants = filteredParticipants
     ? [...filteredParticipants].sort((a, b) => {
         switch (sortBy) {
-          case 'followers':
-            return b.followerCount - a.followerCount;
           case 'performance':
             // Sort by customerCount first, fallback to visitCount, then visitsGenerated
             const aCount = a.customerCount ?? a.visitCount ?? a.visitsGenerated;
@@ -164,6 +165,13 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
   // Check if media event has passed
   const eventHasPassed = isMediaEventPassed(campaign);
   const isMediaEvent = campaign.type === CampaignType.MEDIA_EVENT;
+
+  // Check if invites are allowed (matching iOS logic)
+  const canInviteInfluencers = !eventHasPassed && (campaign.status === 'active' || campaign.status === 'draft');
+
+  const handleInviteInfluencers = () => {
+    setShowInviteDialog(true);
+  };
 
   return (
     <div className="space-y-8">
@@ -190,7 +198,7 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
               )}
             </TabsTrigger>
             <TabsTrigger value="accepted" className="relative data-[state=active]:bg-white data-[state=active]:shadow-sm">
-              Accepted Participants
+              Accepted Influencers
               {participants && participants.length > 0 && (
                 <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                   {participants.length}
@@ -211,16 +219,26 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
                     Review and accept influencer applications for your campaign
                   </CardDescription>
                 </div>
-                {pendingApplications.length > 0 && (
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    onClick={handleAcceptAll}
-                    disabled={acceptApplication.isPending || eventHasPassed}
-                    className="shadow-sm hover:shadow transition-shadow"
+                    onClick={handleInviteInfluencers}
+                    disabled={!canInviteInfluencers}
+                    className="bg-pink-600 hover:bg-pink-700"
                   >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Accept All ({pendingApplications.length})
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite
                   </Button>
-                )}
+                  {pendingApplications.length > 0 && (
+                    <Button
+                      onClick={handleAcceptAll}
+                      disabled={acceptApplication.isPending || !canInviteInfluencers}
+                      className="shadow-sm hover:shadow transition-shadow bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Approve All ({pendingApplications.length})
+                    </Button>
+                  )}
+                </div>
               </div>
               {pendingApplications.length > 3 && (
                 <div className="mt-4">
@@ -333,9 +351,11 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
                           <p className="font-bold text-gray-900 text-lg">
                             {participant.influencerName}
                           </p>
-                          <p className="text-sm text-gray-600 mt-0.5">
-                            {participant.followerCount.toLocaleString()} followers
-                          </p>
+                          {participant.influencerUsername && (
+                            <p className="text-sm text-gray-600 mt-0.5">
+                              @{participant.influencerUsername}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
@@ -356,26 +376,11 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
           {/* Participants Header */}
           <Card className="shadow-sm border-gray-200">
             <CardHeader>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <CardTitle className="text-xl">Active Participants</CardTitle>
-                  <CardDescription className="mt-1">
-                    Influencers currently promoting your campaign
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                    <SelectTrigger className="w-[200px] shadow-sm">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="recent">Most Recent</SelectItem>
-                      <SelectItem value="followers">Most Followers</SelectItem>
-                      <SelectItem value="performance">Best Performance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <CardTitle className="text-xl">Active Influencers</CardTitle>
+                <CardDescription className="mt-1">
+                  Influencers currently promoting your campaign
+                </CardDescription>
               </div>
               {participants && participants.length > 3 && (
                 <div className="mt-4">
@@ -445,7 +450,7 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
                 <div className="rounded-full bg-blue-100 p-4 mb-4">
                   <Users className="h-12 w-12 text-blue-600" />
                 </div>
-                <h3 className="mb-2 text-xl font-semibold text-gray-900">No Participants Yet</h3>
+                <h3 className="mb-2 text-xl font-semibold text-gray-900">No Influencers Yet</h3>
                 <p className="text-center text-sm text-gray-600 max-w-md">
                   Accept applications to add influencers to your campaign
                 </p>
@@ -454,6 +459,13 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Invite Influencers Dialog */}
+      <InviteInfluencersDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        campaignId={campaignId}
+      />
     </div>
   );
 }

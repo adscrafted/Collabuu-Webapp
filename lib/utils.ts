@@ -35,3 +35,34 @@ export function getPerformanceTier(count: number): 'excellent' | 'good' | 'norma
   if (count >= 50) return 'good';
   return 'normal';
 }
+
+/**
+ * Convert snake_case string to camelCase
+ */
+function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * Transform snake_case object keys to camelCase
+ * Handles nested objects and arrays recursively
+ */
+export function transformKeysToCamelCase<T = any>(obj: any): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => transformKeysToCamelCase(item)) as any;
+  }
+
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    return Object.keys(obj).reduce((acc, key) => {
+      const camelKey = toCamelCase(key);
+      acc[camelKey] = transformKeysToCamelCase(obj[key]);
+      return acc;
+    }, {} as any);
+  }
+
+  return obj;
+}

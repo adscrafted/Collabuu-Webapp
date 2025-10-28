@@ -56,13 +56,6 @@ export function BillingTab() {
     try {
       setIsPurchasing(true);
 
-      console.log('Initiating purchase:', {
-        credits: pricing.credits,
-        amount: pricing.price,
-        userId,
-        userEmail,
-      });
-
       // Create Stripe checkout session with dynamic amount
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
@@ -80,8 +73,6 @@ export function BillingTab() {
 
       const responseData = await response.json();
 
-      console.log('API Response:', { status: response.status, responseData });
-
       if (!response.ok) {
         console.error('Checkout session creation failed:', responseData);
         throw new Error(responseData.message || 'Failed to create checkout session');
@@ -92,8 +83,6 @@ export function BillingTab() {
       if (!url) {
         throw new Error('No checkout URL returned from server');
       }
-
-      console.log('Redirecting to Stripe checkout:', url);
 
       // Redirect to Stripe checkout
       window.location.href = url;

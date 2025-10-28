@@ -2,18 +2,18 @@ import { Campaign, CampaignType } from '@/lib/types/campaign';
 
 /**
  * Determines if the Influencers tab should be shown for a campaign
- * REWARDS campaigns don't show the Influencers tab
+ * LOYALTY_REWARD campaigns don't show the Influencers tab
  */
 export function shouldShowInfluencersTab(campaign: Campaign): boolean {
-  return campaign.type !== CampaignType.REWARDS;
+  return campaign.type !== CampaignType.LOYALTY_REWARD;
 }
 
 /**
  * Determines if the Content tab should be shown for a campaign
- * REWARDS campaigns don't show the Content tab
+ * LOYALTY_REWARD campaigns don't show the Content tab
  */
 export function shouldShowContentTab(campaign: Campaign): boolean {
-  return campaign.type !== CampaignType.REWARDS;
+  return campaign.type !== CampaignType.LOYALTY_REWARD;
 }
 
 /**
@@ -22,8 +22,9 @@ export function shouldShowContentTab(campaign: Campaign): boolean {
 export function getCampaignTypeLabel(type: CampaignType): string {
   const labels = {
     [CampaignType.PAY_PER_CUSTOMER]: 'Pay Per Customer',
+    [CampaignType.PAY_PER_POST]: 'Pay Per Post',
     [CampaignType.MEDIA_EVENT]: 'Media Event',
-    [CampaignType.REWARDS]: 'Rewards',
+    [CampaignType.LOYALTY_REWARD]: 'Loyalty Reward',
   };
   return labels[type] || type;
 }
@@ -54,10 +55,12 @@ export function isMediaEventPassed(campaign: Campaign): boolean {
  */
 export function getPrimaryMetricLabel(campaign: Campaign): string {
   switch (campaign.type) {
-    case CampaignType.REWARDS:
+    case CampaignType.LOYALTY_REWARD:
       return 'Actual Visitors';
     case CampaignType.MEDIA_EVENT:
       return 'Influencer Spots';
+    case CampaignType.PAY_PER_POST:
+      return 'Total Posts';
     case CampaignType.PAY_PER_CUSTOMER:
     default:
       return 'Total Visitors';
@@ -66,11 +69,11 @@ export function getPrimaryMetricLabel(campaign: Campaign): string {
 
 /**
  * Determines if credit breakdown should be shown
- * REWARDS and MEDIA_EVENT campaigns hide the credit breakdown section
+ * LOYALTY_REWARD and MEDIA_EVENT campaigns hide the credit breakdown section
  * iOS behavior: commission breakdown is hidden for media events
  */
 export function shouldShowCreditBreakdown(campaign: Campaign): boolean {
-  return campaign.type !== CampaignType.REWARDS && campaign.type !== CampaignType.MEDIA_EVENT;
+  return campaign.type !== CampaignType.LOYALTY_REWARD && campaign.type !== CampaignType.MEDIA_EVENT;
 }
 
 /**

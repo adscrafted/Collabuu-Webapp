@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
 interface ImageUploaderProps {
@@ -22,6 +23,7 @@ export function ImageUploader({
   aspectRatio = '16:9',
   maxSizeMB = 5,
 }: ImageUploaderProps) {
+  const { toast } = useToast();
   const [preview, setPreview] = useState<string | undefined>(value);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,14 +38,22 @@ export function ImageUploader({
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Please upload an image file');
+        toast({
+          title: "Error",
+          description: "Please upload an image file",
+          variant: "destructive"
+        });
         return;
       }
 
       // Validate file size
       const fileSizeMB = file.size / (1024 * 1024);
       if (fileSizeMB > maxSizeMB) {
-        alert(`File size must be less than ${maxSizeMB}MB`);
+        toast({
+          title: "Error",
+          description: `File size must be less than ${maxSizeMB}MB`,
+          variant: "destructive"
+        });
         return;
       }
 
