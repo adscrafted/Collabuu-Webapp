@@ -160,8 +160,6 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
       })
     : [];
 
-  const topPerformers = sortedParticipants.slice(0, 3);
-
   // Check if media event has passed
   const eventHasPassed = isMediaEventPassed(campaign);
   const isMediaEvent = campaign.type === CampaignType.MEDIA_EVENT;
@@ -322,57 +320,6 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
         </TabsContent>
 
         <TabsContent value="accepted" className="space-y-6 mt-0">
-          {/* WEB-ONLY FEATURE: Top Performers Section */}
-          {/* iOS has only a basic list - web has ranked top 3 performers with visual rankings */}
-          {topPerformers.length > 0 && (
-            <Card className="shadow-sm border-gray-200 overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-gray-200">
-                <CardTitle className="text-xl">Top Performers</CardTitle>
-                <CardDescription className="mt-1">
-                  Influencers generating the most visits for your campaign
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-gray-200">
-                  {topPerformers.map((participant, index) => (
-                    <div
-                      key={participant.id}
-                      className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shadow-sm ${
-                          index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                          index === 1 ? 'bg-gray-300 text-gray-800' :
-                          'bg-orange-300 text-orange-900'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900 text-lg">
-                            {participant.influencerName}
-                          </p>
-                          {participant.influencerUsername && (
-                            <p className="text-sm text-gray-600 mt-0.5">
-                              @{participant.influencerUsername}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-3xl font-bold text-gray-900">
-                          {participant.customerCount ?? participant.visitCount ?? participant.visitsGenerated}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-0.5">
-                          {participant.customerCount ? 'customers' : 'visits'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Participants Header */}
           <Card className="shadow-sm border-gray-200">
             <CardHeader>
