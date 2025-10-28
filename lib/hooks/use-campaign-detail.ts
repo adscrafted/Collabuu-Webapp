@@ -93,6 +93,8 @@ export function useCampaignParticipants(id: string) {
           // New fields for customer/visit tracking
           visitCount: participant.visit_count || participant.visitCount || participant.visits_generated || participant.visitsGenerated || 0,
           customerCount: participant.customer_count || participant.customerCount || participant.unique_customers || participant.uniqueCustomers,
+          // Social media handles
+          socialMediaHandles: participant.social_media_handles || participant.socialMediaHandles,
         })) as CampaignParticipant[];
     },
     enabled: !!id,
