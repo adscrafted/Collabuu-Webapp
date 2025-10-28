@@ -102,8 +102,7 @@ export function ParticipantTable({ participants, onRemove, isLoading }: Particip
           </TableHeader>
           <TableBody>
             {participants.map((participant) => {
-              const displayCount = participant.customerCount ?? participant.visitCount ?? participant.visitsGenerated;
-              const displayLabel = participant.customerCount ? 'customers' : 'visits';
+              const displayCount = participant.visitCount ?? participant.visitsGenerated;
               const performanceTier = getPerformanceTier(displayCount);
 
               const availablePlatforms = participant.socialMediaHandles
@@ -192,7 +191,7 @@ export function ParticipantTable({ participants, onRemove, isLoading }: Particip
                       }`}>
                         {formatNumber(displayCount)}
                       </span>
-                      <span className="text-sm text-gray-500">{displayLabel}</span>
+                      <span className="text-sm text-gray-500">visits</span>
                     </div>
                   </TableCell>
                   <TableCell>

@@ -35,9 +35,8 @@ export function ParticipantCard({ participant, onRemove, isLoading }: Participan
     setShowRemoveDialog(false);
   };
 
-  // Use customerCount if available, fallback to visitCount, then visitsGenerated
-  const displayCount = participant.customerCount ?? participant.visitCount ?? participant.visitsGenerated;
-  const displayLabel = participant.customerCount ? 'customers' : 'visits';
+  // Use visitCount or visitsGenerated (treating all as visits)
+  const displayCount = participant.visitCount ?? participant.visitsGenerated;
   const performanceTier = getPerformanceTier(displayCount);
 
   const getSocialIcon = (platform: string) => {
@@ -133,7 +132,7 @@ export function ParticipantCard({ participant, onRemove, isLoading }: Participan
                     performanceTier === 'good' ? 'text-green-700' :
                     'text-blue-700'
                   }`}>
-                    {formatNumber(displayCount)} {displayLabel}
+                    {formatNumber(displayCount)} visits
                   </p>
                 </div>
                 {availablePlatforms.length > 0 && (

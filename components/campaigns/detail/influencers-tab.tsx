@@ -149,9 +149,9 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
     ? [...filteredParticipants].sort((a, b) => {
         switch (sortBy) {
           case 'performance':
-            // Sort by customerCount first, fallback to visitCount, then visitsGenerated
-            const aCount = a.customerCount ?? a.visitCount ?? a.visitsGenerated;
-            const bCount = b.customerCount ?? b.visitCount ?? b.visitsGenerated;
+            // Sort by visitCount or visitsGenerated (treating all as visits)
+            const aCount = a.visitCount ?? a.visitsGenerated;
+            const bCount = b.visitCount ?? b.visitsGenerated;
             return bCount - aCount;
           case 'recent':
           default:
