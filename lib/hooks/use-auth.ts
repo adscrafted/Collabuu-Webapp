@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase/client';
 
 export function useAuth() {
   const router = useRouter();
-  const [supabase] = useState(() => createClient());
+  // Use the singleton instance instead of creating a new one
+  const supabase = useMemo(() => getSupabaseClient(), []);
 
   const {
     user,
@@ -30,7 +31,14 @@ export function useAuth() {
     let subscription: any;
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error);
+        // Clear invalid session
+        logoutAction();
+        return;
+      }
+
       if (session) {
         login(
           session.access_token,
@@ -43,10 +51,25 @@ export function useAuth() {
           session.user.id
         );
       }
+    }).catch((error) => {
+      console.error('Failed to get session:', error);
+      logoutAction();
     });
 
     // Listen for auth changes
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        console.warn('Token refresh failed, clearing session');
+        logoutAction();
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
+        logoutAction();
+        return;
+      }
+
       if (session) {
         login(
           session.access_token,
@@ -58,7 +81,8 @@ export function useAuth() {
           },
           session.user.id
         );
-      } else {
+      } else if (event !== 'INITIAL_SESSION') {
+        // Only logout if it's not the initial session check (which might not have a session)
         logoutAction();
       }
     });
