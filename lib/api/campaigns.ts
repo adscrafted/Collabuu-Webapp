@@ -8,21 +8,22 @@ import {
   CampaignStatus,
 } from '@/lib/types/campaign';
 
-// iOS API Payload Interface (matching backend expectations)
-interface IOSCampaignPayload {
+// Campaign API Payload Interface (matching backend expectations)
+interface CampaignPayload {
   title: string;
   description: string;
-  paymentType: 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward';
+  campaignType: 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward';
   visibility: 'public' | 'private';
   status: 'active' | 'draft';
   requirements: string;
   influencerSpots: number;
   periodStart: string;
   periodEnd: string;
-  creditsPerAction: number;
+  creditsPerAction?: number;
   creditsPerCustomer?: number;
   totalCredits: number;
   imageUrl: string;
+  eventDate?: string;
 }
 
 export const campaignsApi = {
@@ -63,30 +64,40 @@ export const campaignsApi = {
     return {
       campaigns: campaigns.map((campaign: any) => ({
         id: campaign.id,
-        businessId: campaign.business_id || campaign.businessId,
-        type: campaign.payment_type || campaign.campaign_type || campaign.type,
+        businessId: campaign.businessId,
+        type: campaign.type,
         status: campaign.status,
         title: campaign.title,
         description: campaign.description,
-        imageUrl: campaign.image_url || campaign.imageUrl || campaign.imageURL,
-        startDate: campaign.period_start || campaign.start_date || campaign.periodStart,
-        endDate: campaign.period_end || campaign.end_date || campaign.periodEnd,
-        budget: {
-          totalCredits: campaign.total_credits || campaign.totalCredits || 0,
-          creditsPerCustomer: campaign.credits_per_customer || campaign.creditsPerCustomer || campaign.credits_per_action || campaign.creditsPerAction,
-          creditsPerAction: campaign.credits_per_action || campaign.creditsPerAction,
-          maxVisits: campaign.influencer_spots || campaign.influencerSpots,
-          influencerSpots: campaign.influencer_spots || campaign.influencerSpots,
-          rewardValue: campaign.reward_value || campaign.rewardValue,
-        },
+        imageUrl: campaign.imageUrl,
+
+        // Date fields (both formats for compatibility)
+        periodStart: campaign.periodStart,
+        periodEnd: campaign.periodEnd,
+        startDate: campaign.periodStart, // Backward compatibility
+        endDate: campaign.periodEnd,     // Backward compatibility
+
+        // Flat budget fields (iOS-compatible)
+        totalCredits: campaign.totalCredits || 0,
+        creditsPerCustomer: campaign.creditsPerCustomer,
+        creditsPerAction: campaign.creditsPerAction,
+        maxVisits: campaign.maxVisits,
+        influencerSpots: campaign.influencerSpots,
+        influencerSpotsFilled: campaign.influencerSpotsFilled || 0,
+        rewardValue: campaign.rewardValue,
+        visitCount: campaign.visitCount || 0,
+        influencerVisitorCount: campaign.influencerVisitorCount || 0,
+        directAppVisitorCount: campaign.directAppVisitorCount || 0,
+        pendingApplicationsCount: campaign.pendingApplicationsCount || 0,
+
         requirements: campaign.requirements,
         visibility: campaign.visibility || 'public',
-        createdAt: campaign.created_at || campaign.createdAt,
-        updatedAt: campaign.updated_at || campaign.updatedAt,
-        stats: {
-          participantsCount: campaign.influencer_visitor_count || 0,
-          visitsCount: campaign.visits || campaign.visitCount || 0,
-          creditsSpent: (campaign.total_credits || 0) - (campaign.credits || 0),
+        createdAt: campaign.createdAt,
+        updatedAt: campaign.updatedAt,
+        stats: campaign.stats || {
+          participantsCount: 0,
+          visitsCount: campaign.visitCount || 0,
+          creditsSpent: 0,
         },
       })),
       total: campaigns.length,
@@ -101,7 +112,7 @@ export const campaignsApi = {
     const response = await apiClient.get<any>(`/api/business/campaigns/${id}`);
     const campaign = response.data;
 
-    // Transform to match expected Campaign format (same as getCampaigns)
+    // Transform to match expected Campaign format (iOS-compatible)
     return {
       id: campaign.id,
       businessId: campaign.businessId,
@@ -110,31 +121,44 @@ export const campaignsApi = {
       title: campaign.title,
       description: campaign.description,
       imageUrl: campaign.imageUrl,
-      startDate: campaign.periodStart || campaign.startDate,
-      endDate: campaign.periodEnd || campaign.endDate,
+
+      // Date fields (both formats for compatibility)
+      periodStart: campaign.periodStart,
+      periodEnd: campaign.periodEnd,
+      startDate: campaign.periodStart, // Backward compatibility
+      endDate: campaign.periodEnd,     // Backward compatibility
       eventDate: campaign.eventDate,
-      budget: campaign.budget || {
-        totalCredits: campaign.totalCredits || 0,
-      },
+
+      // Flat budget fields (iOS-compatible)
+      totalCredits: campaign.totalCredits || 0,
+      creditsPerCustomer: campaign.creditsPerCustomer,
+      creditsPerAction: campaign.creditsPerAction,
+      maxVisits: campaign.maxVisits,
+      influencerSpots: campaign.influencerSpots,
+      influencerSpotsFilled: campaign.influencerSpotsFilled || 0,
+      rewardValue: campaign.rewardValue,
+      visitCount: campaign.visitCount || 0,
+      influencerVisitorCount: campaign.influencerVisitorCount || 0,
+      directAppVisitorCount: campaign.directAppVisitorCount || 0,
+      pendingApplicationsCount: campaign.pendingApplicationsCount || 0,
+
       requirements: campaign.requirements,
       visibility: campaign.visibility || 'public',
       shareLink: campaign.shareLink,
       influencerCount: campaign.influencerCount,
       createdAt: campaign.createdAt,
       updatedAt: campaign.updatedAt,
-      stats: {
+      stats: campaign.stats || {
         participantsCount: 0,
-        visitsCount: 0,
+        visitsCount: campaign.visitCount || 0,
         creditsSpent: 0,
       },
     };
   },
 
-  // Create new campaign (accepts iOS-formatted payload)
-  createCampaign: async (data: IOSCampaignPayload | CreateCampaignRequest): Promise<Campaign> => {
+  // Create new campaign
+  createCampaign: async (data: CampaignPayload | CreateCampaignRequest): Promise<Campaign> => {
     // Send the payload directly to the API
-    // If it's an iOS payload, it's already formatted correctly
-    // If it's a CreateCampaignRequest, the caller should transform it first
     const response = await apiClient.post<Campaign>('/api/business/campaigns', data);
     return response.data;
   },

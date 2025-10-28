@@ -7,8 +7,6 @@ import {
   DisplaySettings,
   AccountSettings,
   ChangePasswordRequest,
-  RequestEmailChangeRequest,
-  ChangeEmailRequest,
   PaymentMethod,
   BillingHistoryItem,
   BillingHistoryFilters,
@@ -43,6 +41,20 @@ nextApiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor to handle errors properly
+nextApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Extract error message from response
+    const message = error.response?.data?.error || error.message || 'An error occurred';
+    // Create a new error with the message
+    const err = new Error(message);
+    // Preserve the response for debugging
+    (err as any).response = error.response;
+    return Promise.reject(err);
+  }
+);
 
 // Backend response type (snake_case from Supabase)
 interface BackendBusinessProfile {
@@ -158,14 +170,6 @@ export const profileApi = {
 
   changePassword: async (data: ChangePasswordRequest): Promise<void> => {
     await nextApiClient.post('/api/profile/account/change-password', data);
-  },
-
-  requestEmailChange: async (data: RequestEmailChangeRequest): Promise<void> => {
-    await nextApiClient.post('/api/profile/account/request-email-change', data);
-  },
-
-  changeEmail: async (data: ChangeEmailRequest): Promise<void> => {
-    await nextApiClient.post('/api/profile/account/change-email', data);
   },
 
   enableTwoFactor: async (): Promise<{ qrCode: string; secret: string }> => {

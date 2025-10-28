@@ -162,7 +162,12 @@ export function BillingTab() {
               <span className="text-2xl text-gray-500">credits</span>
             </div>
             {pricing.discount > 0 && (
-              <Badge className="bg-green-500 hover:bg-green-600 text-white font-semibold">
+              <Badge
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-500"
+                style={{
+                  boxShadow: `0 0 ${Math.min(pricing.discount, 30)}px rgba(34, 197, 94, ${0.3 + (pricing.discount / 100)})`,
+                }}
+              >
                 {pricing.tier.label}
               </Badge>
             )}
@@ -203,7 +208,12 @@ export function BillingTab() {
                     <TrendingUp className="h-3 w-3" />
                     You save ({pricing.discount}%)
                   </span>
-                  <span className="font-bold">${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span
+                    className="font-bold transition-all duration-500"
+                    style={{
+                      textShadow: `0 0 ${Math.min(pricing.discount / 2, 15)}px rgba(34, 197, 94, ${0.4 + (pricing.discount / 80)})`,
+                    }}
+                  >${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </>
             )}

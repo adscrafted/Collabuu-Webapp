@@ -85,7 +85,7 @@ export function WithdrawalFilters({ filters, onFiltersChange }: WithdrawalFilter
         {/* Status Filter */}
         <ClientOnly>
           <Select
-            value={filters.status || 'all'}
+            value={Array.isArray(filters.status) ? filters.status[0] : (filters.status || 'all')}
             onValueChange={handleStatusChange}
           >
             <SelectTrigger className="w-full lg:w-[180px] h-10 rounded-lg border-pink-500">
@@ -164,7 +164,7 @@ export function WithdrawalFilters({ filters, onFiltersChange }: WithdrawalFilter
           <span className="text-sm text-gray-600">Active filters:</span>
           {filters.status && (
             <Badge variant="secondary" className="gap-1">
-              Status: {getStatusLabel(filters.status)}
+              Status: {getStatusLabel(Array.isArray(filters.status) ? filters.status[0] : filters.status)}
               <button
                 onClick={() => onFiltersChange({ ...filters, status: undefined, page: 1 })}
                 className="ml-1 hover:text-gray-900"

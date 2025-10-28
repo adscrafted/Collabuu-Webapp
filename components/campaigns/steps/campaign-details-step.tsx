@@ -21,8 +21,8 @@ export function CampaignDetailsStep({
   availableCredits,
 }: CampaignDetailsStepProps) {
   const campaignType = form.watch('type');
-  const startDate = form.watch('startDate');
-  const endDate = form.watch('endDate');
+  const periodStart = form.watch('periodStart');
+  const periodEnd = form.watch('periodEnd');
   const visibility = form.watch('visibility') || 'public';
   const creditsPerCustomer = form.watch('budget.creditsPerCustomer');
   const influencerSpots = form.watch('budget.influencerSpots');
@@ -111,20 +111,20 @@ export function CampaignDetailsStep({
             </CardHeader>
             <CardContent>
               <DateRangePicker
-                startDate={startDate}
-                endDate={endDate}
+                startDate={periodStart}
+                endDate={periodEnd}
                 onStartDateChange={(date) =>
-                  form.setValue('startDate', date || new Date(), {
+                  form.setValue('periodStart', date || new Date(), {
                     shouldValidate: true,
                   })
                 }
                 onEndDateChange={(date) =>
-                  form.setValue('endDate', date || new Date(), {
+                  form.setValue('periodEnd', date || new Date(), {
                     shouldValidate: true,
                   })
                 }
-                startDateError={form.formState.errors.startDate?.message}
-                endDateError={form.formState.errors.endDate?.message}
+                startDateError={form.formState.errors.periodStart?.message}
+                endDateError={form.formState.errors.periodEnd?.message}
               />
             </CardContent>
           </Card>

@@ -168,17 +168,25 @@ export function InviteInfluencersDialog({
   };
 
   // Filter out influencers who already have non-withdrawn applications
+  // Also filter out Collabuu Platform account (backend admin account)
   const availableInfluencers = influencers?.filter(
-    (inf) => !inf.applicationStatus || inf.applicationStatus === 'withdrawn'
+    (inf) =>
+      (!inf.applicationStatus || inf.applicationStatus === 'withdrawn') &&
+      inf.username !== 'collabuu_platform' &&
+      !inf.name?.toLowerCase().includes('collabuu platform')
   ) || [];
 
   const unavailableInfluencers = influencers?.filter(
-    (inf) => inf.applicationStatus && inf.applicationStatus !== 'withdrawn'
+    (inf) =>
+      inf.applicationStatus &&
+      inf.applicationStatus !== 'withdrawn' &&
+      inf.username !== 'collabuu_platform' &&
+      !inf.name?.toLowerCase().includes('collabuu platform')
   ) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-3xl h-[600px] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Invite Influencers</DialogTitle>
           <DialogDescription>
@@ -246,12 +254,13 @@ export function InviteInfluencersDialog({
         )}
 
         {/* Influencers List */}
-        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6 max-h-[50vh]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-          ) : availableInfluencers.length === 0 && unavailableInfluencers.length === 0 ? (
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-6 pr-4">
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : availableInfluencers.length === 0 && unavailableInfluencers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Search className="h-12 w-12 text-gray-400 mb-3" />
               <p className="text-sm text-gray-600">
@@ -367,6 +376,7 @@ export function InviteInfluencersDialog({
               )}
             </div>
           )}
+          </div>
         </ScrollArea>
 
         <DialogFooter className="flex-shrink-0">

@@ -85,7 +85,7 @@ export function createServerClient(token?: string) {
  * @param request - Next.js request object or headers
  * @returns Authentication token or null
  */
-export function getAuthToken(headers: Headers): string | null {
+export async function getAuthToken(headers: Headers): Promise<string | null> {
   // Check Authorization header
   const authHeader = headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -93,7 +93,7 @@ export function getAuthToken(headers: Headers): string | null {
   }
 
   // Check cookie
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const tokenCookie = cookieStore.get('auth_token');
   if (tokenCookie) {
     return tokenCookie.value;

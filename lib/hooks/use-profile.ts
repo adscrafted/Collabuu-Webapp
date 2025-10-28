@@ -5,10 +5,9 @@ import {
   PrivacySettings,
   DisplaySettings,
   ChangePasswordRequest,
-  RequestEmailChangeRequest,
-  ChangeEmailRequest,
   BillingHistoryFilters,
 } from '@/lib/types/profile';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 // Query keys
 export const profileKeys = {
@@ -23,26 +22,47 @@ export const profileKeys = {
 
 // Business Profile Hooks
 export function useBusinessProfile() {
+  const updateUser = useAuthStore((state) => state.updateUser);
+
   return useQuery({
     queryKey: profileKeys.business(),
-    queryFn: () => profileApi.getBusinessProfile(),
+    queryFn: async () => {
+      const profile = await profileApi.getBusinessProfile();
+      // Update auth store with business name and logo
+      updateUser({
+        name: profile.businessName,
+        businessName: profile.businessName,
+        avatar: profile.logoUrl,
+        phone: profile.phone,
+      });
+      return profile;
+    },
     staleTime: 60000, // 1 minute
   });
 }
 
 export function useUpdateBusinessProfile() {
   const queryClient = useQueryClient();
+  const updateUser = useAuthStore((state) => state.updateUser);
 
   return useMutation({
     mutationFn: (data: UpdateBusinessProfileRequest) => profileApi.updateBusinessProfile(data),
     onSuccess: (data) => {
       queryClient.setQueryData(profileKeys.business(), data);
+      // Update auth store with new business name and logo
+      updateUser({
+        name: data.businessName,
+        businessName: data.businessName,
+        avatar: data.logoUrl,
+        phone: data.phone,
+      });
     },
   });
 }
 
 export function useUploadLogo() {
   const queryClient = useQueryClient();
+  const updateUser = useAuthStore((state) => state.updateUser);
 
   return useMutation({
     mutationFn: (file: File) => profileApi.uploadLogo(file),
@@ -51,6 +71,10 @@ export function useUploadLogo() {
       queryClient.setQueryData(profileKeys.business(), (old: any) => {
         if (!old) return old;
         return { ...old, logoUrl: data.url };
+      });
+      // Update auth store with new avatar
+      updateUser({
+        avatar: data.url,
       });
     },
   });
@@ -68,23 +92,6 @@ export function useAccountSettings() {
 export function useChangePassword() {
   return useMutation({
     mutationFn: (data: ChangePasswordRequest) => profileApi.changePassword(data),
-  });
-}
-
-export function useRequestEmailChange() {
-  return useMutation({
-    mutationFn: (data: RequestEmailChangeRequest) => profileApi.requestEmailChange(data),
-  });
-}
-
-export function useChangeEmail() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: ChangeEmailRequest) => profileApi.changeEmail(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.account() });
-    },
   });
 }
 

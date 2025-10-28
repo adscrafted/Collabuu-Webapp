@@ -51,79 +51,46 @@ export async function GET(
       );
     }
 
-    // Get query parameters for filtering and pagination
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status'); // pending, verified, rejected
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
-
-    // Build query - join with profiles for user data
-    let query = supabase
-      .from('visits')
-      .select(`
-        *,
-        influencer:influencer_id!inner (
-          id,
-          email,
-          username,
-          full_name,
-          profile_image_url
-        ),
-        customer:customer_id!inner (
-          id,
-          email,
-          username,
-          full_name
-        )
-      `)
+    // Fetch QR code redemptions for visitor timeline (matching iOS implementation)
+    // Each redemption represents a visit
+    const { data: redemptions, error: redemptionsError } = await supabase
+      .from('qr_code_redemptions')
+      .select('id, customer_id, influencer_id, redeemed_at')
       .eq('campaign_id', campaignId)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .not('customer_id', 'is', null)
+      .order('redeemed_at', { ascending: false });
 
-    // Apply status filter if provided
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    const { data: visits, error: visitsError } = await query;
-
-    if (visitsError) {
-      console.error('Error fetching visits:', visitsError);
+    if (redemptionsError) {
+      console.error('Error fetching redemptions:', redemptionsError);
       return NextResponse.json(
-        { error: 'Failed to fetch visits' },
+        { error: 'Failed to fetch visit data' },
         { status: 500 }
       );
     }
 
-    // Transform the data to match the expected format
-    const transformedVisits = visits?.map(visit => ({
-      id: visit.id,
-      campaignId: visit.campaign_id,
-      influencerId: visit.influencer_id,
-      customerId: visit.customer_id,
-      businessId: visit.business_id,
-      status: visit.status,
-      creditsAwarded: visit.credits_awarded,
-      creditsEarned: visit.credits_earned,
-      loyaltyPointsEarned: visit.loyalty_points_earned,
-      visitDate: visit.visit_date,
-      visitType: visit.visit_type,
-      verificationMethod: visit.verification_method,
-      createdAt: visit.created_at,
-      approvedAt: visit.approved_at,
-      influencer: visit.influencer ? {
-        id: visit.influencer.id,
-        email: visit.influencer.email,
-        username: visit.influencer.username,
-        fullName: visit.influencer.full_name,
-        profileImageUrl: visit.influencer.profile_image_url,
-      } : null,
-      customer: visit.customer ? {
-        id: visit.customer.id,
-        email: visit.customer.email,
-        username: visit.customer.username,
-        fullName: visit.customer.full_name,
-      } : null,
+    // Get campaign details for credits calculation
+    const { data: campaignData } = await supabase
+      .from('campaigns')
+      .select('credits_per_customer, credits_per_action')
+      .eq('id', campaignId)
+      .single();
+
+    const creditsPerVisit = campaignData?.credits_per_customer || campaignData?.credits_per_action || 0;
+
+    // Transform redemptions to visit format for the chart
+    const transformedVisits = redemptions?.map(redemption => ({
+      id: redemption.id,
+      campaignId: campaignId,
+      influencerId: redemption.influencer_id,
+      customerId: redemption.customer_id,
+      businessId: campaign.business_id,
+      status: 'verified', // QR redemptions are auto-verified
+      creditsAwarded: creditsPerVisit,
+      visitDate: redemption.redeemed_at,
+      visitType: 'qr_redemption',
+      verificationMethod: 'qr_scan',
+      createdAt: redemption.redeemed_at,
+      approvedAt: redemption.redeemed_at,
     })) || [];
 
     return NextResponse.json(transformedVisits);

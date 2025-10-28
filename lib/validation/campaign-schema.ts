@@ -47,10 +47,10 @@ const budgetSchema = z.object({
 // Step 3: Campaign Details Schema
 export const campaignDetailsSchema = z
   .object({
-    startDate: z.date({
+    periodStart: z.date({
       message: 'Start date is required',
     }),
-    endDate: z.date({
+    periodEnd: z.date({
       message: 'End date is required',
     }),
     budget: budgetSchema,
@@ -58,36 +58,36 @@ export const campaignDetailsSchema = z
     visibility: visibilitySchema,
     eventDate: z.date().optional(),
   })
-  .refine((data) => data.endDate > data.startDate, {
+  .refine((data) => data.periodEnd > data.periodStart, {
     message: 'End date must be after start date',
-    path: ['endDate'],
+    path: ['periodEnd'],
   })
-  .refine((data) => data.startDate >= new Date(new Date().setHours(0, 0, 0, 0)), {
+  .refine((data) => data.periodStart >= new Date(new Date().setHours(0, 0, 0, 0)), {
     message: 'Start date cannot be in the past',
-    path: ['startDate'],
+    path: ['periodStart'],
   })
   .refine(
     (data) => {
       // Calculate duration in days
-      const durationMs = data.endDate.getTime() - data.startDate.getTime();
+      const durationMs = data.periodEnd.getTime() - data.periodStart.getTime();
       const durationDays = durationMs / (1000 * 60 * 60 * 24);
       return durationDays <= 365;
     },
     {
       message: 'Campaign cannot be longer than 365 days',
-      path: ['endDate'],
+      path: ['periodEnd'],
     }
   )
   .refine(
     (data) => {
       // Calculate duration in days
-      const durationMs = data.endDate.getTime() - data.startDate.getTime();
+      const durationMs = data.periodEnd.getTime() - data.periodStart.getTime();
       const durationDays = durationMs / (1000 * 60 * 60 * 24);
       return durationDays >= 1;
     },
     {
       message: 'Campaign must be at least 1 day long',
-      path: ['endDate'],
+      path: ['periodEnd'],
     }
   );
 
@@ -102,8 +102,8 @@ export const campaignFormSchema = z
     description: z.string().min(20, 'Description must be at least 20 characters').max(1000, 'Description must be less than 1000 characters'),
     imageUrl: z.string().url().optional(),
     imageFile: z.instanceof(File).optional(),
-    startDate: z.date(),
-    endDate: z.date(),
+    periodStart: z.date(),
+    periodEnd: z.date(),
     budget: budgetSchema,
     requirements: z.string().min(10).max(2000),
     visibility: visibilitySchema,
@@ -113,36 +113,36 @@ export const campaignFormSchema = z
     message: 'Either image URL or image file must be provided',
     path: ['imageUrl'],
   })
-  .refine((data) => data.endDate > data.startDate, {
+  .refine((data) => data.periodEnd > data.periodStart, {
     message: 'End date must be after start date',
-    path: ['endDate'],
+    path: ['periodEnd'],
   })
-  .refine((data) => data.startDate >= new Date(new Date().setHours(0, 0, 0, 0)), {
+  .refine((data) => data.periodStart >= new Date(new Date().setHours(0, 0, 0, 0)), {
     message: 'Start date cannot be in the past',
-    path: ['startDate'],
+    path: ['periodStart'],
   })
   .refine(
     (data) => {
       // Calculate duration in days
-      const durationMs = data.endDate.getTime() - data.startDate.getTime();
+      const durationMs = data.periodEnd.getTime() - data.periodStart.getTime();
       const durationDays = durationMs / (1000 * 60 * 60 * 24);
       return durationDays <= 365;
     },
     {
       message: 'Campaign cannot be longer than 365 days',
-      path: ['endDate'],
+      path: ['periodEnd'],
     }
   )
   .refine(
     (data) => {
       // Calculate duration in days
-      const durationMs = data.endDate.getTime() - data.startDate.getTime();
+      const durationMs = data.periodEnd.getTime() - data.periodStart.getTime();
       const durationDays = durationMs / (1000 * 60 * 60 * 24);
       return durationDays >= 1;
     },
     {
       message: 'Campaign must be at least 1 day long',
-      path: ['endDate'],
+      path: ['periodEnd'],
     }
   )
   .refine(

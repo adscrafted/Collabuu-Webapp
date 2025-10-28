@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, CreditCard, Save, AlertTriangle, Loader2, User } from 'lucide-react';
+import { Building2, CreditCard, Save, AlertTriangle, Loader2, User, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
 import { BusinessProfileTab } from '@/components/profile/business-profile-tab';
 import { AccountTab } from '@/components/profile/account-tab';
 import { BillingTab } from '@/components/profile/billing-tab';
+import { CreditHistoryTab } from '@/components/profile/credit-history-tab';
 import { useUpdateBusinessProfile } from '@/lib/hooks/use-profile';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,7 @@ function ProfilePageContent() {
 
   // Get active tab from URL query parameter, default to 'business'
   const tabParam = searchParams.get('tab');
-  const activeTab = tabParam && ['business', 'account', 'billing'].includes(tabParam)
+  const activeTab = tabParam && ['business', 'account', 'billing', 'history'].includes(tabParam)
     ? tabParam
     : 'business';
 
@@ -151,6 +152,20 @@ function ProfilePageContent() {
                 <CreditCard className="h-4 w-4 mr-2" />
                 Billing
               </TabsTrigger>
+
+              <TabsTrigger
+                value="history"
+                className={cn(
+                  'relative h-14 rounded-none border-b-2 border-transparent px-0 pb-3 pt-3',
+                  'hover:border-gray-300 hover:text-gray-700',
+                  'data-[state=active]:border-pink-500 data-[state=active]:text-pink-600',
+                  'data-[state=active]:shadow-none',
+                  'transition-colors'
+                )}
+              >
+                <History className="h-4 w-4 mr-2" />
+                Credit History
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -169,6 +184,10 @@ function ProfilePageContent() {
 
             <TabsContent value="billing" className="mt-0">
               <BillingTab />
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-0">
+              <CreditHistoryTab />
             </TabsContent>
           </div>
         </Tabs>

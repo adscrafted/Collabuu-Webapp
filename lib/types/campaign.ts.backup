@@ -10,6 +10,9 @@ export enum CampaignType {
   LOYALTY_REWARD = 'loyalty_reward',
 }
 
+// iOS-compatible payment type enum (same values, different naming)
+export type PaymentType = CampaignType;
+
 export enum CampaignStatus {
   DRAFT = 'draft',
   ACTIVE = 'active',
@@ -17,6 +20,16 @@ export enum CampaignStatus {
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
   EXPIRED = 'expired',
+}
+
+export interface CampaignRequirements {
+  minFollowerCount?: number;
+  requiredHashtags?: string[];
+  locationRequirements?: string;
+  ageRestrictions?: {
+    min?: number;
+    max?: number;
+  };
 }
 
 export interface CampaignBudget {
@@ -48,12 +61,10 @@ export interface CampaignFormData {
   imageFile?: File;
 
   // Step 3: Campaign Details
-  periodStart?: Date;
-  periodEnd?: Date;
-  startDate?: Date; // Alias for periodStart
-  endDate?: Date;   // Alias for periodEnd
+  startDate: Date;
+  endDate: Date;
   budget: CampaignBudget;
-  requirements: string;
+  requirements: string; // Changed from CampaignRequirements object to required string
   visibility: 'public' | 'private';
   eventDate?: Date; // Optional, for media_event type
 }
@@ -66,13 +77,13 @@ export interface Campaign {
   title: string;
   description: string;
   imageUrl?: string;
-  periodStart: string;
-  periodEnd: string;
-  startDate?: string; // Alias for periodStart (webapp compatibility)
-  endDate?: string;   // Alias for periodEnd (webapp compatibility)
+  startDate: string;
+  endDate: string;
+  periodStart?: string; // Alias for startDate
+  periodEnd?: string; // Alias for endDate
   eventDate?: string;
 
-  // Flat budget fields (iOS-compatible structure)
+  // Flat budget fields (replacing nested budget object)
   creditsPerCustomer?: number;
   creditsPerAction?: number;
   maxVisits?: number;
@@ -81,11 +92,12 @@ export interface Campaign {
   rewardValue?: number;
   totalCredits: number;
 
-  // Calculated fields (iOS-compatible naming)
-  visitCount?: number; // Total visits count (iOS field name)
-  influencerVisitorCount?: number; // Visitors attributed to influencer referrals
-  directAppVisitorCount?: number; // Visitors from direct app (platform attribution)
+  // Calculated fields
+  visits?: number; // Total visits count
   pendingApplicationsCount?: number;
+
+  // Legacy support - budget object for backward compatibility
+  budget?: CampaignBudget;
 
   requirements: string;
   visibility: 'public' | 'private';
@@ -100,11 +112,11 @@ export interface CreateCampaignRequest {
   title: string;
   description: string;
   imageUrl?: string;
-  periodStart: string;
-  periodEnd: string;
+  startDate: string;
+  endDate: string;
   eventDate?: string;
 
-  // Flat budget fields (iOS-compatible)
+  // Flat budget fields
   creditsPerCustomer?: number;
   creditsPerAction?: number;
   maxVisits?: number;
@@ -172,7 +184,6 @@ export interface CampaignStats {
   visitsCount: number;
   creditsSpent: number;
   acceptedInfluencersCount?: number; // Number of accepted influencers
-  contentSubmissionsCount?: number; // Number of content submissions
 }
 
 // Extended Campaign with Stats
@@ -205,7 +216,7 @@ export interface CampaignMetrics {
   influencerVisitorCount: number; // Visitors attributed to influencer referrals
   directAppVisitorCount: number; // Visitors from direct app (platform attribution)
   totalParticipants: number;
-  totalCreditsSpent: number;
+  creditsSpent: number;
   totalBudget: number;
   averageCostPerVisit: number;
   totalViews: number;
@@ -278,19 +289,22 @@ export interface UpdateCampaignRequest {
   title?: string;
   description?: string;
   imageUrl?: string;
-  periodStart?: string;
-  periodEnd?: string;
+  startDate?: string;
+  endDate?: string;
   period_start?: string; // Compatibility - snake_case format
   period_end?: string;   // Compatibility - snake_case format
   eventDate?: string;
 
-  // Flat budget fields (iOS-compatible)
+  // Flat budget fields
   creditsPerCustomer?: number;
   creditsPerAction?: number;
   maxVisits?: number;
   influencerSpots?: number;
   rewardValue?: number;
   totalCredits?: number;
+
+  // Legacy support
+  budget?: CampaignBudget;
 
   requirements?: string;
   visibility?: 'public' | 'private';
@@ -315,8 +329,8 @@ export type DateRangePreset = 'last_7_days' | 'last_30_days' | 'all_time' | 'cus
 
 export interface DateRange {
   preset: DateRangePreset;
-  periodStart?: string;
-  periodEnd?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 // Content Submission Types
@@ -337,7 +351,28 @@ export interface ContentSubmission {
   viewedAt?: string;
 }
 
-// Helper function to get the campaign type
+// Helper function to get budget fields from either flat or nested structure
+export function getCampaignBudget(campaign: Campaign): CampaignBudget {
+  // If flat fields exist, use them
+  if (campaign.creditsPerCustomer !== undefined ||
+      campaign.creditsPerAction !== undefined ||
+      campaign.totalCredits !== undefined) {
+    return {
+      creditsPerCustomer: campaign.creditsPerCustomer,
+      creditsPerAction: campaign.creditsPerAction,
+      maxVisits: campaign.maxVisits,
+      influencerSpots: campaign.influencerSpots,
+      influencerSpotsFilled: campaign.influencerSpotsFilled,
+      rewardValue: campaign.rewardValue,
+      totalCredits: campaign.totalCredits || 0,
+    };
+  }
+
+  // Fall back to nested budget object
+  return campaign.budget || { totalCredits: 0 };
+}
+
+// Helper function to get the campaign type (handles both type and paymentType)
 export function getCampaignType(campaign: Campaign): CampaignType {
-  return campaign.type;
+  return campaign.paymentType || campaign.type;
 }

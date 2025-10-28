@@ -40,13 +40,19 @@ export function useAuth() {
       }
 
       if (session) {
+        // Preserve existing user data if available (from persisted store or previous login)
+        const existingUser = user;
         login(
           session.access_token,
           {
             id: session.user.id,
             email: session.user.email!,
-            name: session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            // Preserve business name/avatar/phone if already set
+            name: existingUser?.name || existingUser?.businessName || session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            businessName: existingUser?.businessName,
             role: session.user.user_metadata?.role || 'business',
+            avatar: existingUser?.avatar,
+            phone: existingUser?.phone,
           },
           session.user.id
         );
@@ -71,13 +77,19 @@ export function useAuth() {
       }
 
       if (session) {
+        // Preserve existing user data if available (from persisted store or previous login)
+        const existingUser = user;
         login(
           session.access_token,
           {
             id: session.user.id,
             email: session.user.email!,
-            name: session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            // Preserve business name/avatar/phone if already set
+            name: existingUser?.name || existingUser?.businessName || session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            businessName: existingUser?.businessName,
             role: session.user.user_metadata?.role || 'business',
+            avatar: existingUser?.avatar,
+            phone: existingUser?.phone,
           },
           session.user.id
         );
@@ -107,9 +119,15 @@ export function useAuth() {
     // Clear local state
     logoutAction();
 
+    // Clear cookies
+    if (typeof document !== 'undefined') {
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      document.cookie = 'business_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    }
+
     // Redirect to login
     router.push('/login');
-  }, [logoutAction, router]);
+  }, [logoutAction, router, supabase]);
 
   // Check if user has required role
   const hasRole = useCallback(

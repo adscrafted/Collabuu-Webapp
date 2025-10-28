@@ -42,8 +42,8 @@ export default function NewCampaignPage() {
       imageUrl: undefined,
       imageFile: undefined,
       visibility: 'public',
-      startDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 1 month from now
+      periodStart: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+      periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 1 month from now
       eventDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
       budget: {
         creditsPerCustomer: 25,
@@ -69,7 +69,7 @@ export default function NewCampaignPage() {
         isValid = await form.trigger(['title', 'description', 'requirements', 'imageUrl']);
         break;
       case 2:
-        isValid = await form.trigger(['startDate', 'endDate', 'eventDate', 'budget', 'visibility']);
+        isValid = await form.trigger(['periodStart', 'periodEnd', 'eventDate', 'budget', 'visibility']);
         break;
       case 3:
         isValid = true;
@@ -96,10 +96,15 @@ export default function NewCampaignPage() {
         requirements: data.requirements,
         imageUrl: data.imageUrl,
         visibility: data.visibility,
-        startDate: data.startDate.toISOString(),
-        endDate: data.endDate.toISOString(),
+        periodStart: data.periodStart.toISOString(),
+        periodEnd: data.periodEnd.toISOString(),
         eventDate: data.eventDate?.toISOString(),
-        budget: data.budget,
+        totalCredits: data.budget.totalCredits,
+        creditsPerCustomer: data.budget.creditsPerCustomer,
+        creditsPerAction: data.budget.creditsPerAction,
+        maxVisits: data.budget.maxVisits,
+        influencerSpots: data.budget.influencerSpots,
+        rewardValue: data.budget.rewardValue,
         status: CampaignStatus.ACTIVE, // Always create active campaigns like iOS
       },
       imageFile,

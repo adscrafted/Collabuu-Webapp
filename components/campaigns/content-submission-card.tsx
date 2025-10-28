@@ -32,12 +32,14 @@ export function ContentSubmissionCard({
 }: ContentSubmissionCardProps) {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const approveContent = useApproveContent(campaignId);
 
   const handleCardClick = () => {
     if (submission.status === 'new') {
       onView(submission.id);
     }
+    setImageError(false); // Reset image error state when opening modal
     setShowModal(true);
   };
 
@@ -133,13 +135,14 @@ export function ContentSubmissionCard({
     }
 
     // Fallback: Show thumbnail or placeholder
-    if (thumbnailUrl) {
+    if (thumbnailUrl && !imageError) {
       return (
-        <div className="aspect-video w-full overflow-hidden rounded-lg">
+        <div className="aspect-video w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
           <img
             src={thumbnailUrl}
             alt="Content preview"
             className="h-full w-full object-cover"
+            onError={() => setImageError(true)}
           />
         </div>
       );
@@ -147,19 +150,33 @@ export function ContentSubmissionCard({
 
     return (
       <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-gray-100">
-        {getContentTypeIcon(submission.postType)}
-        <p className="ml-2 text-sm text-gray-500">No preview available</p>
+        <div className="text-center">
+          {getContentTypeIcon(submission.postType)}
+          <p className="mt-2 text-sm text-gray-500">Preview not available</p>
+        </div>
       </div>
     );
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name?: string) => {
+    if (!name) return '??';
     return name
       .split(' ')
       .map((n) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Date not available';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      return format(date, 'MMM d, yyyy • h:mm a');
+    } catch (error) {
+      return 'Invalid date';
+    }
   };
 
   return (
@@ -235,7 +252,7 @@ export function ContentSubmissionCard({
 
             {/* Date */}
             <p className="text-xs text-gray-500">
-              {format(new Date(submission.postedAt), 'MMM d, yyyy • h:mm a')}
+              {formatDate(submission.postedAt)}
             </p>
           </div>
         </CardContent>
@@ -311,14 +328,14 @@ export function ContentSubmissionCard({
               <div>
                 <p className="text-xs font-medium text-gray-500">Submitted</p>
                 <p className="mt-1 text-sm font-semibold text-gray-900">
-                  {format(new Date(submission.postedAt), 'MMM d, yyyy • h:mm a')}
+                  {formatDate(submission.postedAt)}
                 </p>
               </div>
               {submission.viewedAt && (
                 <div>
                   <p className="text-xs font-medium text-gray-500">Viewed</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {format(new Date(submission.viewedAt), 'MMM d, yyyy • h:mm a')}
+                    {formatDate(submission.viewedAt)}
                   </p>
                 </div>
               )}

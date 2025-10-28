@@ -77,29 +77,21 @@ export function shouldShowCreditBreakdown(campaign: Campaign): boolean {
 }
 
 /**
- * Gets formatted influencer spots for media events
+ * Gets formatted influencer spots for campaigns
  */
-export function getInfluencerSpotsText(campaign: Campaign): string | null {
-  if (campaign.type !== CampaignType.MEDIA_EVENT) {
-    return null;
-  }
+export function getInfluencerSpotsText(campaign: Campaign): string {
+  const total = campaign.influencerSpots ?? 0;
+  const filled = campaign.influencerCount ?? 0;
 
-  const filled = campaign.budget?.influencerSpotsFilled || 0;
-  const total = campaign.budget?.influencerSpots || 0;
-
-  return `${filled} / ${total}`;
+  return `${filled}/${total} spots filled`;
 }
 
 /**
- * Checks if influencer spots are available for media events
+ * Checks if influencer spots are available
  */
 export function hasAvailableSpots(campaign: Campaign): boolean {
-  if (campaign.type !== CampaignType.MEDIA_EVENT) {
-    return true; // Other types don't have spot limitations
-  }
-
-  const filled = campaign.budget?.influencerSpotsFilled || 0;
-  const total = campaign.budget?.influencerSpots || 0;
+  const total = campaign.influencerSpots ?? 0;
+  const filled = campaign.influencerCount ?? 0;
 
   return filled < total;
 }

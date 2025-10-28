@@ -38,11 +38,7 @@ export type SocialMediaFormData = z.infer<typeof socialMediaSchema>;
 
 // Password Change Schema
 export const passwordSchema = z.string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number')
-  .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character');
+  .min(6, 'Password must be at least 6 characters');
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -57,20 +53,6 @@ export const changePasswordSchema = z.object({
 );
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
-
-// Email Change Schema
-export const requestEmailChangeSchema = z.object({
-  newEmail: z.string().email('Please enter a valid email address'),
-});
-
-export type RequestEmailChangeFormData = z.infer<typeof requestEmailChangeSchema>;
-
-export const changeEmailSchema = z.object({
-  newEmail: z.string().email('Please enter a valid email address'),
-  verificationCode: z.string().length(6, 'Verification code must be 6 digits').regex(/^\d+$/, 'Verification code must contain only numbers'),
-});
-
-export type ChangeEmailFormData = z.infer<typeof changeEmailSchema>;
 
 // Privacy Settings Schema
 export const privacySettingsSchema = z.object({
@@ -102,16 +84,7 @@ export type DisplaySettingsFormData = z.infer<typeof displaySettingsSchema>;
 
 // Password Strength Calculator
 export const calculatePasswordStrength = (password: string): 'weak' | 'medium' | 'strong' => {
-  let strength = 0;
-
-  if (password.length >= 8) strength++;
-  if (password.length >= 12) strength++;
-  if (/[a-z]/.test(password)) strength++;
-  if (/[A-Z]/.test(password)) strength++;
-  if (/[0-9]/.test(password)) strength++;
-  if (/[^a-zA-Z0-9]/.test(password)) strength++;
-
-  if (strength <= 2) return 'weak';
-  if (strength <= 4) return 'medium';
+  if (password.length < 6) return 'weak';
+  if (password.length < 10) return 'medium';
   return 'strong';
 };

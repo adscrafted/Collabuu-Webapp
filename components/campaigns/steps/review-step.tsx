@@ -135,11 +135,11 @@ export function ReviewStep({ form, onEditStep }: ReviewStepProps) {
                   <>
                     <p>
                       <span className="font-semibold">Start:</span>{' '}
-                      {formData.startDate && format(formData.startDate, 'PPP')}
+                      {formData.periodStart && format(formData.periodStart, 'PPP')}
                     </p>
                     <p>
                       <span className="font-semibold">End:</span>{' '}
-                      {formData.endDate && format(formData.endDate, 'PPP')}
+                      {formData.periodEnd && format(formData.periodEnd, 'PPP')}
                     </p>
                   </>
                 )}

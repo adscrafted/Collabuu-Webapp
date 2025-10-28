@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.' },
+        { error: `Invalid file type: ${file.type}. Only JPEG, PNG, WebP, and GIF are allowed.` },
         { status: 400 }
       );
     }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File size too large. Maximum size is 5MB.' },
+        { error: `File size too large: ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum size is 5MB.` },
         { status: 400 }
       );
     }
@@ -78,8 +78,19 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
+
+      // Provide more specific error messages
+      let errorMessage = 'Failed to upload file';
+      if (uploadError.message?.includes('fetch failed') || uploadError.message?.includes('socket')) {
+        errorMessage = 'Upload failed due to network error. Please try again.';
+      } else if (uploadError.message?.includes('exists')) {
+        errorMessage = 'File already exists. Please try again.';
+      } else if (uploadError.message) {
+        errorMessage = uploadError.message;
+      }
+
       return NextResponse.json(
-        { error: 'Failed to upload file' },
+        { error: errorMessage },
         { status: 500 }
       );
     }

@@ -19,7 +19,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -48,7 +48,7 @@ export async function PATCH(
 
     // TODO: Verify admin role
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { transactionId, notes } = body;
 

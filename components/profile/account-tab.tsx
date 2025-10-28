@@ -1,19 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, Mail, Lock } from 'lucide-react';
+import { Shield, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { useAccountSettings } from '@/lib/hooks/use-profile';
 import { ChangePasswordModal } from './change-password-modal';
-import { ChangeEmailModal } from './change-email-modal';
 
 export function AccountTab() {
   const { data: accountSettings } = useAccountSettings();
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  const [changeEmailOpen, setChangeEmailOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -34,18 +31,7 @@ export function AccountTab() {
                 {accountSettings?.email || 'Loading...'}
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setChangeEmailOpen(true)}
-              disabled={!accountSettings}
-            >
-              <Mail className="h-4 w-4 mr-2" />
-              Change Email
-            </Button>
           </div>
-
-          <Separator />
 
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -68,11 +54,6 @@ export function AccountTab() {
       <ChangePasswordModal
         open={changePasswordOpen}
         onOpenChange={setChangePasswordOpen}
-      />
-      <ChangeEmailModal
-        open={changeEmailOpen}
-        onOpenChange={setChangeEmailOpen}
-        currentEmail={accountSettings?.email || ''}
       />
     </div>
   );

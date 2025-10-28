@@ -76,10 +76,13 @@ export function useLogin() {
         // Fetch business profile from backend API
         // The access token will be automatically included by the API client
         let businessId: string | undefined;
+        let businessName: string | undefined;
+        let logoUrl: string | undefined;
+        let phone: string | undefined;
 
         try {
           const profileResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/profile`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/business/profile`,
             {
               headers: {
                 'Authorization': `Bearer ${data.session.access_token}`,
@@ -90,7 +93,10 @@ export function useLogin() {
 
           if (profileResponse.ok) {
             const profileData = await profileResponse.json();
-            businessId = profileData.data?.businessId || profileData.data?.id;
+            businessId = profileData.id;
+            businessName = profileData.businessName;
+            logoUrl = profileData.logoUrl;
+            phone = profileData.phone;
           }
         } catch (profileError) {
           // Log but don't fail if profile fetch fails
@@ -103,8 +109,11 @@ export function useLogin() {
           user: {
             id: data.user.id,
             email: data.user.email!,
-            name: data.user.user_metadata?.name || data.user.email!.split('@')[0],
+            name: businessName || data.user.user_metadata?.name || data.user.email!.split('@')[0],
+            businessName: businessName,
             role: data.user.user_metadata?.role || 'business',
+            avatar: logoUrl,
+            phone: phone,
           },
           businessId,
         };

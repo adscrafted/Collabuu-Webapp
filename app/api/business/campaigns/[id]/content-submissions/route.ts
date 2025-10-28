@@ -55,19 +55,10 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status'); // new, viewed, approved, rejected
 
-    // Build query - join with profiles for user data
+    // Build query
     let query = supabase
       .from('content_submissions')
-      .select(`
-        *,
-        influencer:influencer_id!inner (
-          id,
-          email,
-          username,
-          full_name,
-          profile_image_url
-        )
-      `)
+      .select('*')
       .eq('campaign_id', campaignId)
       .order('submitted_at', { ascending: false });
 
@@ -86,26 +77,70 @@ export async function GET(
       );
     }
 
-    // Transform the data to match the expected format
-    const transformedContent = contentSubmissions?.map(content => ({
-      id: content.id,
-      campaignId: content.campaign_id,
-      influencerId: content.influencer_id,
-      contentType: content.content_type,
-      contentUrl: content.content_url,
-      platform: content.platform,
-      status: content.status,
-      submittedAt: content.submitted_at,
-      message: content.message,
-      createdAt: content.created_at,
-      influencer: content.influencer ? {
-        id: content.influencer.id,
-        email: content.influencer.email,
-        username: content.influencer.username,
-        fullName: content.influencer.full_name,
-        profileImageUrl: content.influencer.profile_image_url,
-      } : null,
-    })) || [];
+    // Get unique influencer IDs
+    const influencerIds = [...new Set(contentSubmissions?.map(c => c.influencer_id).filter(Boolean))];
+
+    console.log('[Content Submissions API] Content submissions count:', contentSubmissions?.length);
+    console.log('[Content Submissions API] Influencer IDs:', influencerIds);
+
+    // Fetch all influencer profiles in one query (table is user_profiles, not profiles)
+    const { data: profiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('id, username, first_name, last_name, full_name, profile_image_url')
+      .in('id', influencerIds);
+
+    if (profilesError) {
+      console.error('[Content Submissions API] Error fetching influencer profiles:', profilesError);
+    } else {
+      console.log('[Content Submissions API] Successfully fetched profiles from user_profiles table');
+    }
+
+    console.log('[Content Submissions API] Profiles fetched:', profiles?.length);
+
+    // Log each profile's name fields specifically
+    profiles?.forEach((p: any) => {
+      console.log(`[Content Submissions API] Profile ${p.id}:`, {
+        id: p.id,
+        username: p.username,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        full_name: p.full_name,
+        profile_image_url: p.profile_image_url
+      });
+    });
+
+    // Create a map of influencer profiles for quick lookup
+    const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+    // Transform the data to match the expected ContentSubmission interface
+    const transformedContent = contentSubmissions?.map((content: any) => {
+      const profile = profilesMap.get(content.influencer_id);
+
+      // Construct full name from first_name + last_name, fallback to full_name or username
+      const firstName = profile?.first_name || '';
+      const lastName = profile?.last_name || '';
+      const fullNameFromParts = `${firstName} ${lastName}`.trim();
+      const displayName = fullNameFromParts || profile?.full_name || profile?.username || 'Unknown';
+
+      return {
+        id: content.id,
+        campaignId: content.campaign_id,
+        influencerId: content.influencer_id,
+        // Flatten influencer fields
+        influencerName: displayName,
+        influencerUsername: profile?.username,
+        influencerAvatar: profile?.profile_image_url,
+        // Map content fields to expected format
+        postType: content.content_type, // video, image, post
+        platform: content.platform, // instagram, youtube, tiktok, other
+        contentUrl: content.content_url,
+        imageUrl: content.thumbnail_url || content.content_url, // Use thumbnail or content URL for images
+        caption: content.caption || content.message,
+        status: content.status, // new, viewed, approved
+        postedAt: content.posted_at || content.submitted_at || content.created_at,
+        viewedAt: content.viewed_at,
+      };
+    }) || [];
 
     return NextResponse.json(transformedContent);
   } catch (error) {

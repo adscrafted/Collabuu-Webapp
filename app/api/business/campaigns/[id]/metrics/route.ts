@@ -5,6 +5,9 @@ import { transformKeysToCamelCase } from '@/lib/utils';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Platform user ID for direct app attribution (matches iOS implementation)
+const PLATFORM_USER_ID = "17b87cb6-9a11-4d50-b742-b1b122cc9f12";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,10 +40,10 @@ export async function GET(
     const { id } = await params;
     const campaignId = id;
 
-    // Verify campaign ownership
+    // Verify campaign ownership and get campaign details
     const { data: campaign, error: campaignError } = await supabase
       .from('campaigns')
-      .select('id, business_id')
+      .select('id, business_id, credits_per_customer, credits_per_action')
       .eq('id', campaignId)
       .eq('business_id', user.id)
       .single();
@@ -66,48 +69,56 @@ export async function GET(
       .eq('campaign_id', campaignId)
       .eq('status', 'accepted');
 
-    // Count total visits
-    const { count: totalVisits } = await supabase
-      .from('visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('campaign_id', campaignId);
-
-    // Sum credits earned
-    const { data: creditsData } = await supabase
-      .from('visits')
-      .select('credits_awarded')
-      .eq('campaign_id', campaignId)
-      .eq('status', 'verified');
-
-    const totalCreditsSpent = creditsData?.reduce((sum, visit) => sum + (visit.credits_awarded || 0), 0) || 0;
-
     // Count content submissions
     const { count: totalContentSubmissions } = await supabase
       .from('content_submissions')
       .select('*', { count: 'exact', head: true })
       .eq('campaign_id', campaignId);
 
-    // Count visitors from influencer referrals
-    const { count: influencerVisitorCount } = await supabase
-      .from('visits')
-      .select('*', { count: 'exact', head: true })
+    // Calculate visitor counts from QR code redemptions (matching iOS implementation)
+    // Use Sets to count UNIQUE customers, not total redemptions
+    const { data: redemptions } = await supabase
+      .from('qr_code_redemptions')
+      .select('customer_id, influencer_id')
       .eq('campaign_id', campaignId)
-      .not('influencer_id', 'is', null);
+      .not('customer_id', 'is', null);
 
-    // Count visitors from direct app (no influencer attribution)
-    const { count: directAppVisitorCount } = await supabase
-      .from('visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('campaign_id', campaignId)
-      .is('influencer_id', null);
+    let influencerVisitorCount = 0;
+    let directAppVisitorCount = 0;
+
+    if (redemptions) {
+      const influencerCustomers = new Set<string>();
+      const directAppCustomers = new Set<string>();
+
+      redemptions.forEach(redemption => {
+        if (redemption.customer_id) {
+          // Platform user ID and null influencer_id both count as direct app traffic
+          if (redemption.influencer_id === PLATFORM_USER_ID || redemption.influencer_id === null) {
+            directAppCustomers.add(redemption.customer_id);
+          } else if (redemption.influencer_id) {
+            influencerCustomers.add(redemption.customer_id);
+          }
+        }
+      });
+
+      influencerVisitorCount = influencerCustomers.size;
+      directAppVisitorCount = directAppCustomers.size;
+    }
+
+    // Calculate total credits spent from visitor count × credits per customer
+    const totalVisitors = influencerVisitorCount + directAppVisitorCount;
+    const creditsPerVisit = campaign.credits_per_customer || campaign.credits_per_action || 0;
+    const totalCreditsSpent = totalVisitors * creditsPerVisit;
 
     // Build metrics response
     const metrics = {
       total_applications: totalApplications || 0,
       total_participants: totalParticipants || 0,
-      total_visits: totalVisits || 0,
-      influencer_visitor_count: influencerVisitorCount || 0,
-      direct_app_visitor_count: directAppVisitorCount || 0,
+      // Total visits is the sum of influencer and direct app visitors
+      total_visits: totalVisitors,
+      // Visitor attribution from QR code redemptions (matching iOS)
+      influencer_visitor_count: influencerVisitorCount,
+      direct_app_visitor_count: directAppVisitorCount,
       total_credits_spent: totalCreditsSpent,
       total_content_submissions: totalContentSubmissions || 0,
       conversion_rate: totalApplications ? ((totalParticipants || 0) / totalApplications * 100).toFixed(2) : '0.00',

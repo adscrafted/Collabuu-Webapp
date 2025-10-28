@@ -30,12 +30,13 @@ export default function CampaignDetailPage() {
   const { data: contentSubmissions } = useContentSubmissions(campaignId);
 
   const getStatusBadge = (status: CampaignStatus) => {
-    const statusConfig = {
+    const statusConfig: Record<CampaignStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       [CampaignStatus.DRAFT]: { label: 'Draft', variant: 'secondary' as const },
       [CampaignStatus.ACTIVE]: { label: 'Active', variant: 'default' as const },
       [CampaignStatus.PAUSED]: { label: 'Paused', variant: 'outline' as const },
       [CampaignStatus.COMPLETED]: { label: 'Completed', variant: 'secondary' as const },
       [CampaignStatus.CANCELLED]: { label: 'Cancelled', variant: 'destructive' as const },
+      [CampaignStatus.EXPIRED]: { label: 'Expired', variant: 'destructive' as const },
     };
 
     const config = statusConfig[status] || { label: status || 'Unknown', variant: 'secondary' as const };
@@ -45,6 +46,16 @@ export default function CampaignDetailPage() {
   // Determine which tabs to show based on campaign type
   const showInfluencersTab = campaign ? shouldShowInfluencersTab(campaign) : true;
   const showContentTab = campaign ? shouldShowContentTab(campaign) : true;
+
+  // Check if campaign can be edited (not expired and not started)
+  const canEdit = campaign ? (() => {
+    const now = new Date();
+    const startDate = new Date(campaign.periodStart);
+    const endDate = new Date(campaign.periodEnd);
+
+    // Cannot edit if expired or already started
+    return now < startDate && campaign.status !== CampaignStatus.EXPIRED;
+  })() : false;
 
   // Loading state
   if (isLoading) {
@@ -108,17 +119,19 @@ export default function CampaignDetailPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Edit Button - Primary Action */}
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/campaigns/${campaignId}/edit`)}
-            className="hover:bg-gray-50"
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-        </div>
+        {canEdit && (
+          <div className="flex items-center gap-2">
+            {/* Edit Button - Primary Action */}
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/campaigns/${campaignId}/edit`)}
+              className="hover:bg-gray-50"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

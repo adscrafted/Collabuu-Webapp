@@ -3,7 +3,7 @@
 import { format, parseISO, startOfDay } from 'date-fns';
 import { Calendar, Tag, TrendingUp, Users, Target, Smartphone, UserCheck, CalendarClock, Eye, Camera } from 'lucide-react';
 import { useCampaignMetrics, useCampaignVisits, useCampaignApplications, useContentSubmissions } from '@/lib/hooks/use-campaign-detail';
-import { Campaign, CampaignType } from '@/lib/types/campaign';
+import { Campaign, CampaignType, getCampaignType } from '@/lib/types/campaign';
 import {
   getCampaignTypeLabel,
   getEventTypeLabel,
@@ -33,8 +33,16 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
   const { data: applications, isLoading: applicationsLoading } = useCampaignApplications(campaignId);
   const { data: contentSubmissions, isLoading: contentLoading } = useContentSubmissions(campaignId);
 
-  // Count pending applications
-  const pendingApplicationsCount = applications?.filter(app => app.status === 'pending').length || 0;
+  const campaignType = getCampaignType(campaign);
+
+  // Access flat budget fields directly
+  const totalCredits = campaign.totalCredits ?? 0;
+  const creditsPerCustomer = campaign.creditsPerCustomer;
+  const influencerSpots = campaign.influencerSpots ?? 0;
+  const rewardValue = campaign.rewardValue;
+
+  // Use pendingApplicationsCount from campaign if available, otherwise count from applications
+  const pendingApplicationsCount = campaign.pendingApplicationsCount ?? (applications?.filter(app => app.status === 'pending').length || 0);
 
   const formatCampaignDate = (dateString: string | undefined): string | null => {
     if (!dateString) return null;
@@ -102,14 +110,14 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-500">Type</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {getCampaignTypeLabel(campaign.type)}
+                    {getCampaignTypeLabel(campaignType)}
                   </p>
                 </div>
               </div>
 
               <Separator />
 
-              {campaign.type === CampaignType.MEDIA_EVENT ? (
+              {campaignType === CampaignType.MEDIA_EVENT ? (
                 <>
                   <div className="flex items-start gap-3">
                     <CalendarClock className="mt-1 h-5 w-5 text-gray-500 flex-shrink-0" />
@@ -139,10 +147,10 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-500">Duration</p>
                     <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {formatCampaignDate(campaign.startDate) || 'Not set'}
+                      {formatCampaignDate(campaign.periodStart) || 'Not set'}
                     </p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {formatCampaignDate(campaign.endDate) || 'Not set'}
+                      {formatCampaignDate(campaign.periodEnd) || 'Not set'}
                     </p>
                   </div>
                 </div>
@@ -216,7 +224,7 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
               ) : (
                 <>
                   <div className="text-3xl font-bold text-gray-900">
-                    {metrics?.totalParticipants || 0}/{campaign.budget?.influencerSpots || 0}
+                    {metrics?.totalParticipants || 0}/{influencerSpots}
                   </div>
                   <div className="mt-3 space-y-1.5">
                     <p className="text-xs text-gray-600">
@@ -268,7 +276,7 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
           </Card>
 
           {/* Reward Value - Only shown for REWARDS campaigns */}
-          {campaign.type === CampaignType.LOYALTY_REWARD && (
+          {campaignType === CampaignType.LOYALTY_REWARD && (
             <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
@@ -284,7 +292,7 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                 ) : (
                   <>
                     <div className="text-3xl font-bold text-gray-900">
-                      {(campaign.budget?.rewardValue || 0).toLocaleString()}
+                      {(rewardValue || 0).toLocaleString()}
                     </div>
                     <p className="mt-1 text-xs text-gray-600">per redemption</p>
                   </>
@@ -306,20 +314,20 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                 <Skeleton className="h-24 w-full" />
               ) : (
                 <>
-                  {campaign.type !== CampaignType.MEDIA_EVENT && (
+                  {campaignType !== CampaignType.MEDIA_EVENT && (
                     <div>
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span className="text-gray-600 font-medium">Credits Used</span>
                         <span className="font-bold text-gray-900">
-                          {(metrics?.creditsSpent || 0).toLocaleString()} / {(campaign.budget?.totalCredits || 0).toLocaleString()}
+                          {(metrics?.totalCreditsSpent || 0).toLocaleString()} / {totalCredits.toLocaleString()}
                         </span>
                       </div>
                       <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
                         <div
                           className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
                           style={{
-                            width: `${campaign.budget?.totalCredits
-                              ? Math.min(((metrics?.creditsSpent || 0) / campaign.budget.totalCredits) * 100, 100)
+                            width: `${totalCredits
+                              ? Math.min(((metrics?.totalCreditsSpent || 0) / totalCredits) * 100, 100)
                               : 0}%`,
                           }}
                         />
@@ -362,7 +370,7 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                   )}
 
                   <div className="grid gap-6 sm:grid-cols-2">
-                    {campaign.type === CampaignType.MEDIA_EVENT ? (
+                    {campaignType === CampaignType.MEDIA_EVENT ? (
                       <div className="space-y-1">
                         <p className="text-sm text-gray-600">Fixed Event Price</p>
                         <p className="text-3xl font-bold text-gray-900">
@@ -375,14 +383,14 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                         <div className="space-y-1">
                           <p className="text-sm text-gray-600">Maximum Credit Spend</p>
                           <p className="text-3xl font-bold text-gray-900">
-                            {(campaign.budget?.totalCredits || 0).toLocaleString()}
+                            {totalCredits.toLocaleString()}
                           </p>
                         </div>
-                        {campaign.budget?.creditsPerCustomer && (
+                        {creditsPerCustomer && (
                           <div className="space-y-1">
                             <p className="text-sm text-gray-600">Pay per Customer</p>
                             <p className="text-3xl font-bold text-gray-900">
-                              {campaign.budget.creditsPerCustomer.toLocaleString()}
+                              {creditsPerCustomer.toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-500">credits per visit</p>
                           </div>
@@ -414,7 +422,7 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
         </Card>
 
         {/* Rewards Campaign Details */}
-        {campaign.type === CampaignType.LOYALTY_REWARD && (
+        {campaignType === CampaignType.LOYALTY_REWARD && (
           <Card className="shadow-sm border-gray-200">
             <CardHeader>
               <CardTitle>Reward Details</CardTitle>
@@ -425,7 +433,7 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
                 <div className="space-y-1">
                   <p className="text-sm text-gray-600">Reward Value</p>
                   <p className="text-3xl font-bold text-gray-900">
-                    {(campaign.budget?.rewardValue || 0).toLocaleString()}
+                    {(rewardValue || 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500">per redemption</p>
                 </div>

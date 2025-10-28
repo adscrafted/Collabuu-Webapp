@@ -11,7 +11,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authorization header
@@ -40,7 +40,7 @@ export async function GET(
 
     // TODO: Verify admin role
 
-    const { id } = params;
+    const { id } = await params;
 
     // Fetch withdrawal request with influencer details
     const { data: withdrawal, error: withdrawalError } = await supabase

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { useBusinessProfile } from '@/lib/hooks/use-profile';
 
 export default function AppLayout({
   children,
@@ -12,6 +13,9 @@ export default function AppLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Load business profile to update auth store with business name and logo
+  useBusinessProfile();
 
   // Load collapsed state from localStorage on mount
   useEffect(() => {

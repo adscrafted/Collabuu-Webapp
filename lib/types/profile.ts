@@ -99,15 +99,6 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
-export interface ChangeEmailRequest {
-  newEmail: string;
-  verificationCode: string;
-}
-
-export interface RequestEmailChangeRequest {
-  newEmail: string;
-}
-
 export interface BillingHistoryItem {
   id: string;
   date: string;

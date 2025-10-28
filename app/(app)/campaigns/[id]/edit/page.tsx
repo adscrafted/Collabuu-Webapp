@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ArrowLeft, Save, X, Trash2 } from 'lucide-react';
 import { useCampaign, useUpdateCampaign, useDeleteCampaign } from '@/lib/hooks/use-campaign-detail';
-import { CampaignType } from '@/lib/types/campaign';
+import { CampaignType, CampaignStatus } from '@/lib/types/campaign';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
@@ -71,6 +71,27 @@ export default function EditCampaignPage() {
     },
   });
 
+  // Check if campaign can be edited (not expired and not started)
+  useEffect(() => {
+    if (campaign) {
+      const now = new Date();
+      const startDate = new Date(campaign.periodStart);
+      const isExpired = campaign.status === CampaignStatus.EXPIRED;
+      const hasStarted = now >= startDate;
+
+      if (isExpired || hasStarted) {
+        toast({
+          title: 'Cannot Edit Campaign',
+          description: isExpired
+            ? 'This campaign has expired and cannot be edited.'
+            : 'This campaign has already started and cannot be edited.',
+          variant: 'destructive',
+        });
+        router.push(`/campaigns/${campaignId}`);
+      }
+    }
+  }, [campaign, campaignId, router, toast]);
+
   // Populate form when campaign data loads
   useEffect(() => {
     if (campaign) {
@@ -78,30 +99,30 @@ export default function EditCampaignPage() {
         title: campaign.title || '',
         description: campaign.description || '',
         requirements: campaign.requirements || '',
-        startDate: campaign.startDate?.split('T')[0] || '',
-        endDate: campaign.endDate?.split('T')[0] || '',
+        startDate: campaign.periodStart?.split('T')[0] || '',
+        endDate: campaign.periodEnd?.split('T')[0] || '',
       });
     }
   }, [campaign, form]);
 
   // Check if dates can be edited (only if they haven't passed yet)
-  const canEditStartDate = campaign?.startDate
-    ? new Date(campaign.startDate) > new Date()
+  const canEditStartDate = campaign?.periodStart
+    ? new Date(campaign.periodStart) > new Date()
     : true;
 
-  const canEditEndDate = campaign?.endDate
-    ? new Date(campaign.endDate) > new Date()
+  const canEditEndDate = campaign?.periodEnd
+    ? new Date(campaign.periodEnd) > new Date()
     : true;
 
   // Check if campaign can be deleted (matching iOS logic)
   const canDeleteCampaign = campaign
-    ? (campaign.startDate ? new Date(campaign.startDate) > new Date() : true) &&
+    ? (campaign.periodStart ? new Date(campaign.periodStart) > new Date() : true) &&
       (campaign.influencerCount ?? 0) === 0
     : false;
 
   const deleteDisabledReason = campaign
     ? !canDeleteCampaign
-      ? campaign.startDate && new Date(campaign.startDate) <= new Date()
+      ? campaign.periodStart && new Date(campaign.periodStart) <= new Date()
         ? "Cannot delete campaign that has already started"
         : "Cannot delete campaign with accepted influencers"
       : undefined
@@ -121,8 +142,8 @@ export default function EditCampaignPage() {
         title: data.title,
         description: data.description,
         requirements: data.requirements,
-        period_start: toISO8601(data.startDate),
-        period_end: toISO8601(data.endDate),
+        periodStart: toISO8601(data.startDate),
+        periodEnd: toISO8601(data.endDate),
       });
 
       toast({
@@ -186,13 +207,13 @@ export default function EditCampaignPage() {
   };
 
   const getCampaignTypeLabel = (type: CampaignType) => {
-    const labels = {
+    const labels: Record<CampaignType, string> = {
       [CampaignType.PAY_PER_CUSTOMER]: 'Pay Per Customer',
       [CampaignType.PAY_PER_POST]: 'Pay Per Post',
       [CampaignType.MEDIA_EVENT]: 'Media Event',
       [CampaignType.LOYALTY_REWARD]: 'Loyalty Reward',
     };
-    return labels[type];
+    return labels[type] || type;
   };
 
   if (isLoading) {

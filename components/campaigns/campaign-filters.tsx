@@ -42,6 +42,7 @@ const formatStatusLabel = (status: CampaignStatus): string => {
     [CampaignStatus.DRAFT]: 'Draft',
     [CampaignStatus.COMPLETED]: 'Completed',
     [CampaignStatus.CANCELLED]: 'Cancelled',
+    [CampaignStatus.EXPIRED]: 'Expired',
   };
   return labels[status];
 };
@@ -54,7 +55,7 @@ const formatTypeLabel = (type: CampaignType): string => {
     [CampaignType.MEDIA_EVENT]: 'Media Event',
     [CampaignType.LOYALTY_REWARD]: 'Loyalty Reward',
   };
-  return labels[type];
+  return labels[type] || type;
 };
 
 export function CampaignFiltersBar({ filters, onFiltersChange }: CampaignFiltersProps) {
@@ -137,6 +138,7 @@ export function CampaignFiltersBar({ filters, onFiltersChange }: CampaignFilters
               <SelectItem value={CampaignStatus.DRAFT}>Draft</SelectItem>
               <SelectItem value={CampaignStatus.COMPLETED}>Completed</SelectItem>
               <SelectItem value={CampaignStatus.CANCELLED}>Cancelled</SelectItem>
+              <SelectItem value={CampaignStatus.EXPIRED}>Expired</SelectItem>
             </SelectContent>
           </Select>
         </ClientOnly>

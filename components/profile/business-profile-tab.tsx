@@ -78,15 +78,29 @@ export function BusinessProfileTab({ onFormChange, onSubmit }: BusinessProfileTa
   // Update form values when profile data loads
   useEffect(() => {
     if (profile) {
+      console.log('Profile data:', profile); // Debug log
       form.reset({
-        businessName: profile.businessName,
-        phone: profile.phone,
-        email: profile.email,
+        businessName: profile.businessName || '',
+        phone: profile.phone || '',
+        email: profile.email || '',
         website: profile.website || '',
-        address: profile.address,
+        address: {
+          street: profile.address?.street || '',
+          city: profile.address?.city || '',
+          state: profile.address?.state || '',
+          zipCode: profile.address?.zipCode || '',
+          country: profile.address?.country || '',
+        },
       });
 
-      socialMediaForm.reset(profile.socialMedia || {});
+      socialMediaForm.reset({
+        instagram: profile.socialMedia?.instagram || '',
+        tiktok: profile.socialMedia?.tiktok || '',
+        youtube: profile.socialMedia?.youtube || '',
+        facebook: profile.socialMedia?.facebook || '',
+        twitter: profile.socialMedia?.twitter || '',
+        linkedin: profile.socialMedia?.linkedin || '',
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]); // Only depend on profile to avoid infinite loops
@@ -328,7 +342,7 @@ export function BusinessProfileTab({ onFormChange, onSubmit }: BusinessProfileTa
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Country *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select country" />

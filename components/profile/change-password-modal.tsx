@@ -103,24 +103,8 @@ export function ChangePasswordModal({
 
   const passwordRequirements = [
     {
-      label: 'At least 8 characters',
-      met: newPassword.length >= 8,
-    },
-    {
-      label: 'Contains lowercase letter',
-      met: /[a-z]/.test(newPassword),
-    },
-    {
-      label: 'Contains uppercase letter',
-      met: /[A-Z]/.test(newPassword),
-    },
-    {
-      label: 'Contains number',
-      met: /[0-9]/.test(newPassword),
-    },
-    {
-      label: 'Contains special character',
-      met: /[^a-zA-Z0-9]/.test(newPassword),
+      label: 'At least 6 characters',
+      met: newPassword.length >= 6,
     },
   ];
 

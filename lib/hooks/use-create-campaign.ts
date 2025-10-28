@@ -12,70 +12,74 @@ interface CreateCampaignData {
 // Minimum credits per influencer constant
 const MIN_CREDITS_PER_INFLUENCER = 150;
 
-// iOS API Payload Interface
-interface IOSCampaignPayload {
+// Campaign API Payload Interface
+interface CampaignPayload {
   title: string;
   description: string;
-  paymentType: 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward';
+  campaignType: 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward';
   visibility: 'public' | 'private';
   status: 'active' | 'draft';
   requirements: string;
   influencerSpots: number;
   periodStart: string;
   periodEnd: string;
-  creditsPerAction: number;
+  creditsPerAction?: number;
   creditsPerCustomer?: number;
   totalCredits: number;
   imageUrl: string;
+  eventDate?: string;
 }
 
 /**
- * Transform webapp CreateCampaignRequest to iOS API payload format
+ * Transform webapp CreateCampaignRequest to API payload format
  */
-function transformToIOSPayload(data: CreateCampaignRequest, imageUrl: string): IOSCampaignPayload {
-  // Map campaign type to iOS payment type
-  const paymentTypeMap: Record<CampaignType, 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward'> = {
+function transformToAPIPayload(data: CreateCampaignRequest, imageUrl: string): CampaignPayload {
+  // Map campaign type to API campaign type
+  const campaignTypeMap: Record<CampaignType, 'pay_per_customer' | 'pay_per_post' | 'media_event' | 'loyalty_reward'> = {
     [CampaignType.PAY_PER_CUSTOMER]: 'pay_per_customer',
     [CampaignType.PAY_PER_POST]: 'pay_per_post',
     [CampaignType.MEDIA_EVENT]: 'media_event',
     [CampaignType.LOYALTY_REWARD]: 'loyalty_reward',
   };
 
-  const paymentType = paymentTypeMap[data.type];
+  const campaignType = campaignTypeMap[data.type];
 
   // Calculate creditsPerAction based on campaign type
   let creditsPerAction = 0;
-  let totalCredits = data.budget.totalCredits || 0;
-  let influencerSpots = data.budget.influencerSpots || data.budget.maxVisits || 0;
+  let totalCredits = data.totalCredits || 0;
+  let influencerSpots = data.influencerSpots || 0;
 
-  if (paymentType === 'pay_per_customer') {
+  if (campaignType === 'pay_per_customer') {
     // For pay per customer: creditsPerAction is the cost per visit
-    creditsPerAction = data.budget.creditsPerCustomer || 0;
-  } else if (paymentType === 'media_event') {
+    creditsPerAction = data.creditsPerCustomer || 0;
+  } else if (campaignType === 'pay_per_post') {
+    // For pay per post: creditsPerAction is the cost per post
+    creditsPerAction = data.creditsPerAction || 0;
+  } else if (campaignType === 'media_event') {
     // For media events: Force totalCredits to 300
     totalCredits = 300;
     // CRITICAL FIX #1: creditsPerAction calculation for media events
     // Match iOS implementation: divide 300 by influencerSpots
     creditsPerAction = Math.max(Math.floor(300 / Math.max(influencerSpots, 1)), 1);
-  } else if (paymentType === 'loyalty_reward') {
-    // For loyalty rewards: Force totalCredits, influencerSpots, and creditsPerAction to 0 (matching iOS)
+  } else if (campaignType === 'loyalty_reward') {
+    // For loyalty rewards: Force totalCredits, influencerSpots, and creditsPerAction to 0
     totalCredits = 0;
     influencerSpots = 0;
-    creditsPerAction = 0;  // iOS always sets this to 0 for loyalty rewards
+    creditsPerAction = 0;
   }
 
   // Requirements is already a string
   const requirementsString = data.requirements || '';
 
   // For loyalty reward campaigns, force visibility to public; otherwise use provided visibility
-  const visibility = paymentType === 'loyalty_reward' ? 'public' : (data.visibility || 'public');
+  const visibility = campaignType === 'loyalty_reward' ? 'public' : (data.visibility || 'public');
 
-  // CRITICAL FIX #2: Media event date handling
-  // For media events, use eventDate as start and add 6 hours for end (matching iOS)
+  // Media event date handling
+  // For media events, use eventDate as start and add 6 hours for end
   let campaignStartDate: string;
   let campaignEndDate: string;
 
-  if (paymentType === 'media_event' && data.eventDate) {
+  if (campaignType === 'media_event' && data.eventDate) {
     // For media events, use eventDate as start and add 6 hours for end
     campaignStartDate = data.eventDate;
     const endDate = new Date(data.eventDate);
@@ -83,24 +87,25 @@ function transformToIOSPayload(data: CreateCampaignRequest, imageUrl: string): I
     campaignEndDate = endDate.toISOString();
   } else {
     // For other campaign types, use regular start/end dates
-    campaignStartDate = data.startDate;
-    campaignEndDate = data.endDate;
+    campaignStartDate = data.periodStart;
+    campaignEndDate = data.periodEnd;
   }
 
   return {
     title: data.title,
     description: data.description,
-    paymentType,
+    campaignType,
     visibility,
-    status: 'active', // iOS always creates active campaigns
+    status: 'active',
     requirements: requirementsString,
     influencerSpots: influencerSpots || 0,
     periodStart: campaignStartDate,
     periodEnd: campaignEndDate,
     creditsPerAction: creditsPerAction || 0,
-    creditsPerCustomer: paymentType === 'pay_per_customer' ? (data.budget.creditsPerCustomer || 0) : undefined,
+    creditsPerCustomer: campaignType === 'pay_per_customer' ? (data.creditsPerCustomer || 0) : undefined,
     totalCredits: totalCredits || 0,
     imageUrl: imageUrl || '',
+    eventDate: campaignType === 'media_event' ? data.eventDate : undefined,
   };
 }
 
@@ -115,15 +120,32 @@ export function useCreateCampaign() {
 
       // Upload image if provided
       if (imageFile) {
-        const uploadResult = await campaignsApi.uploadImage(imageFile);
-        imageUrl = uploadResult.url;
+        try {
+          const uploadResult = await campaignsApi.uploadImage(imageFile);
+          imageUrl = uploadResult.url;
+        } catch (error: any) {
+          // Extract error message from response
+          const errorMessage = error.response?.data?.error || error.message || 'Failed to upload image';
+
+          // Show specific error toast for upload failure
+          toast({
+            title: 'Image Upload Failed',
+            description: errorMessage,
+            variant: 'destructive',
+          });
+
+          // Re-throw with a marker to prevent duplicate error toasts
+          const uploadError: any = new Error(errorMessage);
+          uploadError.isUploadError = true;
+          throw uploadError;
+        }
       }
 
-      // Transform to iOS payload format
-      const iosPayload = transformToIOSPayload(campaignData, imageUrl);
+      // Transform to API payload format
+      const apiPayload = transformToAPIPayload(campaignData, imageUrl);
 
-      // Create campaign with iOS-formatted payload
-      const campaign = await campaignsApi.createCampaign(iosPayload);
+      // Create campaign with formatted payload
+      const campaign = await campaignsApi.createCampaign(apiPayload);
 
       return campaign;
     },
@@ -141,6 +163,11 @@ export function useCreateCampaign() {
       router.push(`/campaigns/${campaign.id}`);
     },
     onError: (error: any) => {
+      // Skip showing error toast if it's an upload error (already handled)
+      if (error.isUploadError) {
+        return;
+      }
+
       let errorMessage = 'Failed to create campaign. Please try again.';
 
       // Check for specific error types
