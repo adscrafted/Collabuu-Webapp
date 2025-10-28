@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { InfluencerApplicationCard } from '@/components/campaigns/influencer-application-card';
-import { ParticipantCard } from '@/components/campaigns/participant-card';
+import { ParticipantTable } from '@/components/campaigns/participant-table';
 import { InviteInfluencersDialog } from '@/components/campaigns/invite-influencers-dialog';
 
 interface InfluencersTabProps {
@@ -361,22 +361,15 @@ export function InfluencersTab({ campaignId, campaign }: InfluencersTabProps) {
 
           {/* Participants List */}
           {participantsLoading ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className="h-72 w-full rounded-xl" />
-              ))}
+            <div className="space-y-4">
+              <Skeleton className="h-96 w-full rounded-lg" />
             </div>
           ) : sortedParticipants.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {sortedParticipants.map((participant) => (
-                <ParticipantCard
-                  key={participant.id}
-                  participant={participant}
-                  onRemove={handleRemove}
-                  isLoading={removeParticipant.isPending}
-                />
-              ))}
-            </div>
+            <ParticipantTable
+              participants={sortedParticipants}
+              onRemove={handleRemove}
+              isLoading={removeParticipant.isPending}
+            />
           ) : searchQuery ? (
             <Card className="shadow-sm border-gray-200">
               <CardContent className="flex flex-col items-center justify-center py-16">
