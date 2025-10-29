@@ -174,38 +174,40 @@ export function OverviewTab({ campaign, campaignId, onTabChange }: OverviewTabPr
 
         {/* Metrics Grid - Campaign Type Specific */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Actual Visitors Card */}
-          <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Actual Visitors
-              </CardTitle>
-              <div className="rounded-full bg-blue-100 p-2">
-                <UserCheck className="h-4 w-4 text-blue-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {metricsLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <>
-                  <div className="text-3xl font-bold text-gray-900">{(metrics?.totalVisits ?? 0).toLocaleString()}</div>
-                  <div className="mt-3 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-                      <UserCheck className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-                      <span className="font-medium text-blue-600">From Influencers:</span>
-                      <span className="font-bold text-gray-900">{(metrics?.influencerVisitorCount ?? 0).toLocaleString()}</span>
+          {/* Actual Visitors Card - Hidden for PAY_PER_POST campaigns (no QR tracking) */}
+          {campaignType !== CampaignType.PAY_PER_POST && (
+            <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Actual Visitors
+                </CardTitle>
+                <div className="rounded-full bg-blue-100 p-2">
+                  <UserCheck className="h-4 w-4 text-blue-600" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {metricsLoading ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-gray-900">{(metrics?.totalVisits ?? 0).toLocaleString()}</div>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                        <UserCheck className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium text-blue-600">From Influencers:</span>
+                        <span className="font-bold text-gray-900">{(metrics?.influencerVisitorCount ?? 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                        <Smartphone className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                        <span className="font-medium text-green-600">Direct from App:</span>
+                        <span className="font-bold text-gray-900">{(metrics?.directAppVisitorCount ?? 0).toLocaleString()}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-                      <Smartphone className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                      <span className="font-medium text-green-600">Direct from App:</span>
-                      <span className="font-bold text-gray-900">{(metrics?.directAppVisitorCount ?? 0).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Influencers Card */}
           <Card

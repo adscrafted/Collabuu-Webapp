@@ -100,6 +100,16 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
             </div>
           )}
 
+          {/* Pending Approvals Badge - Top Left */}
+          {campaign.pendingApplicationsCount && campaign.pendingApplicationsCount > 0 && (
+            <div className="absolute top-3 left-3">
+              <Badge className="bg-red-600 text-white border-0 font-semibold px-2.5 py-1 shadow-md">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                {campaign.pendingApplicationsCount} Pending
+              </Badge>
+            </div>
+          )}
+
           {/* Status Badge - Top Right */}
           <div className="absolute top-3 right-3">
             <Badge className={cn('border font-medium', statusConfig.color)}>

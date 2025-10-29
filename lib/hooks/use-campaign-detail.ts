@@ -174,6 +174,8 @@ export function useAcceptApplication(campaignId: string) {
       queryClient.invalidateQueries({ queryKey: campaignKeys.applications(campaignId) });
       queryClient.invalidateQueries({ queryKey: campaignKeys.participants(campaignId) });
       queryClient.invalidateQueries({ queryKey: campaignKeys.metrics(campaignId) });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(campaignId) });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.all });
     },
   });
 }
@@ -192,6 +194,8 @@ export function useRejectApplication(campaignId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.applications(campaignId) });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(campaignId) });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.all });
     },
   });
 }

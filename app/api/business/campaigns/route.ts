@@ -173,6 +173,18 @@ export async function GET(request: NextRequest) {
           // Don't fail, just set to 0
         }
 
+        // Count pending applications
+        const { count: pendingCount, error: pendingError } = await supabase
+          .from('campaign_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', campaign.id)
+          .eq('status', 'pending');
+
+        if (pendingError) {
+          console.error('Error fetching pending applications for campaign', campaign.id, ':', pendingError);
+          // Don't fail, just set to 0
+        }
+
         // Count accepted influencers (same as participants for now)
         const acceptedInfluencersCount = participantsCount || 0;
 
@@ -205,7 +217,7 @@ export async function GET(request: NextRequest) {
           visitCount: visitorCounts.total,
           influencerVisitorCount: visitorCounts.influencer,
           directAppVisitorCount: visitorCounts.directApp,
-          pendingApplicationsCount: campaign.pendingApplicationsCount,
+          pendingApplicationsCount: pendingCount || 0,
           // Flat budget fields (iOS structure)
           totalCredits: campaign.totalCredits || 0,
           creditsPerCustomer: campaign.creditsPerCustomer,
