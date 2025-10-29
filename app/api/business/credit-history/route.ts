@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 2. Fetch campaigns to create campaign_create transactions
+    // 2. Fetch campaigns for reference and fallback
     const { data: campaigns, error: campaignsError } = await supabase
       .from('campaigns')
       .select('id, title, total_credits, created_at, credits_per_action, status')
@@ -62,10 +62,48 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching campaigns:', campaignsError);
     }
 
-    // Add campaign creation transactions
+    // 3. Fetch campaign_create transactions from credit_transactions table
+    const { data: campaignTransactions, error: campaignTransactionsError } = await supabase
+      .from('credit_transactions')
+      .select('*')
+      .eq('business_id', businessId)
+      .eq('transaction_type', 'campaign_create')
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false });
+
+    if (campaignTransactionsError) {
+      console.error('Error fetching campaign transactions:', campaignTransactionsError);
+    }
+
+    // Track which campaigns already have transaction records
+    const campaignsWithTransactions = new Set<string>();
+
+    // Add campaign transactions from credit_transactions table
+    if (campaignTransactions) {
+      campaignTransactions.forEach((transaction: any) => {
+        allTransactions.push({
+          id: `campaign_txn_${transaction.id}`,
+          business_id: businessId,
+          amount: transaction.amount,
+          type: 'campaignCreate',
+          description: transaction.description || 'Campaign Credit Deduction',
+          campaign_id: transaction.related_id,
+          campaign_name: campaigns?.find((c: any) => c.id === transaction.related_id)?.title,
+          created_at: transaction.created_at,
+        });
+        if (transaction.related_id) {
+          campaignsWithTransactions.add(transaction.related_id);
+        }
+      });
+    }
+
+    // 4. For older campaigns without transaction records, create synthetic transactions
+    // Note: We deduct the full campaign budget when created (reserves credits)
+    // Individual QR redemptions are not separate transactions - they're covered by the campaign budget
     if (campaigns) {
       for (const campaign of campaigns) {
-        if (campaign.total_credits && campaign.total_credits > 0) {
+        // Only add if this campaign doesn't already have a transaction record
+        if (!campaignsWithTransactions.has(campaign.id) && campaign.total_credits && campaign.total_credits > 0) {
           allTransactions.push({
             id: `campaign_create_${campaign.id}`,
             business_id: businessId,
@@ -77,39 +115,16 @@ export async function GET(request: NextRequest) {
             created_at: campaign.created_at,
           });
         }
-
-        // Fetch QR code redemptions for this campaign
-        const { data: redemptions } = await supabase
-          .from('qr_code_redemptions')
-          .select('*')
-          .eq('campaign_id', campaign.id)
-          .eq('status', 'completed');
-
-        if (redemptions) {
-          redemptions.forEach((redemption: any) => {
-            if (redemption.credits_earned && redemption.credits_earned > 0) {
-              allTransactions.push({
-                id: `redemption_${redemption.id}`,
-                business_id: businessId,
-                amount: -Math.abs(redemption.credits_earned),
-                type: 'campaignCreate',
-                description: `Credits transferred to influencer for ${campaign.title}`,
-                campaign_id: campaign.id,
-                campaign_name: campaign.title,
-                created_at: redemption.redeemed_at || redemption.created_at,
-              });
-            }
-          });
-        }
       }
     }
 
-    // 3. Fetch refunds from credit_transactions table
+    // 5. Fetch refunds from credit_transactions table
     const campaignIds = campaigns ? campaigns.map((c: any) => c.id) : [];
     if (campaignIds.length > 0) {
       const { data: refunds } = await supabase
         .from('credit_transactions')
         .select('*')
+        .eq('business_id', businessId) // SECURITY: Explicit user isolation
         .eq('transaction_type', 'refund')
         .eq('related_table', 'campaigns')
         .in('related_id', campaignIds)

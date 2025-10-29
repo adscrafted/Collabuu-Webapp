@@ -404,6 +404,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create transaction record for the credit deduction
+    if (totalCredits && totalCredits > 0) {
+      const { error: transactionError } = await supabase
+        .from('credit_transactions')
+        .insert({
+          business_id: user.id,
+          transaction_type: 'campaign_create',
+          amount: -Math.abs(totalCredits), // Negative for deduction
+          description: `Campaign created: ${sanitizedTitle}`,
+          status: 'completed',
+          related_table: 'campaigns',
+          related_id: campaign.id,
+          created_at: new Date().toISOString(),
+        });
+
+      if (transactionError) {
+        console.error('Error creating transaction record:', transactionError);
+        // Don't fail the whole operation, just log the error
+        // The transaction history will fall back to reading from campaigns table
+      }
+    }
+
     // Transform snake_case keys to camelCase for frontend
     const transformedCampaign = transformKeysToCamelCase(campaign);
 

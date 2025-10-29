@@ -59,6 +59,82 @@ export async function GET(request: NextRequest) {
     // Log raw database data for debugging
     console.log('Raw profile from DB:', JSON.stringify(profile, null, 2));
 
+    // Calculate current credit balance from transaction history (source of truth)
+    const businessId = user.id;
+    const allTransactions: any[] = [];
+
+    // 1. Fetch credit additions (purchases)
+    const { data: additions } = await supabase
+      .from('credit_transactions')
+      .select('amount, created_at')
+      .eq('business_id', businessId)
+      .in('transaction_type', ['purchase'])
+      .eq('status', 'completed');
+
+    if (additions) {
+      additions.forEach((txn: any) => allTransactions.push(txn));
+    }
+
+    // 2. Fetch campaigns for reference
+    const { data: campaigns } = await supabase
+      .from('campaigns')
+      .select('id, total_credits, created_at')
+      .eq('business_id', businessId);
+
+    // 3. Fetch campaign_create transactions
+    const { data: campaignTransactions } = await supabase
+      .from('credit_transactions')
+      .select('amount, created_at, related_id')
+      .eq('business_id', businessId)
+      .eq('transaction_type', 'campaign_create')
+      .eq('status', 'completed');
+
+    // Track which campaigns have transaction records
+    const campaignsWithTransactions = new Set<string>();
+    if (campaignTransactions) {
+      campaignTransactions.forEach((txn: any) => {
+        allTransactions.push(txn);
+        if (txn.related_id) {
+          campaignsWithTransactions.add(txn.related_id);
+        }
+      });
+    }
+
+    // 4. Add campaign deductions for older campaigns without transaction records
+    if (campaigns) {
+      campaigns.forEach((campaign: any) => {
+        // Only add if this campaign doesn't already have a transaction record
+        if (!campaignsWithTransactions.has(campaign.id) && campaign.total_credits && campaign.total_credits > 0) {
+          allTransactions.push({
+            amount: -Math.abs(campaign.total_credits),
+            created_at: campaign.created_at,
+          });
+        }
+      });
+    }
+
+    // 5. Fetch refunds
+    const campaignIds = campaigns ? campaigns.map((c: any) => c.id) : [];
+    if (campaignIds.length > 0) {
+      const { data: refunds } = await supabase
+        .from('credit_transactions')
+        .select('amount, created_at')
+        .eq('business_id', businessId)
+        .eq('transaction_type', 'refund')
+        .eq('related_table', 'campaigns')
+        .in('related_id', campaignIds);
+
+      if (refunds) {
+        refunds.forEach((txn: any) => allTransactions.push(txn));
+      }
+    }
+
+    // Calculate balance
+    let calculatedBalance = 0;
+    allTransactions.forEach((txn) => {
+      calculatedBalance += txn.amount;
+    });
+
     // Build social media handles from individual columns (database stores them separately)
     const socialMediaHandles = {
       instagram: profile.instagram_handle || null,
@@ -84,7 +160,7 @@ export async function GET(request: NextRequest) {
       state: profile.state,
       postalCode: profile.postal_code,
       country: profile.country,
-      availableCredits: profile.available_credits || profile.credits_available || 0,
+      availableCredits: calculatedBalance, // Use calculated balance from transaction history
       logoUrl: profile.logo_url || profile.profile_image_url || profile.image_urls?.[0],
       imageUrls: profile.image_urls || [],
       isVerified: profile.is_verified || false,

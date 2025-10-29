@@ -54,6 +54,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Fetch campaigns to calculate deductions
+    // Note: We deduct the full campaign budget when created (reserves credits)
+    // Individual QR redemptions are not separate transactions - they're covered by the campaign budget
     const { data: campaigns } = await supabase
       .from('campaigns')
       .select('id, total_credits, created_at')
@@ -68,24 +70,6 @@ export async function GET(request: NextRequest) {
             created_at: campaign.created_at,
           });
         }
-
-        // Fetch QR code redemptions for this campaign
-        const { data: redemptions } = await supabase
-          .from('qr_code_redemptions')
-          .select('*')
-          .eq('campaign_id', campaign.id)
-          .eq('status', 'completed');
-
-        if (redemptions) {
-          redemptions.forEach((redemption: any) => {
-            if (redemption.credits_earned && redemption.credits_earned > 0) {
-              allTransactions.push({
-                amount: -Math.abs(redemption.credits_earned),
-                created_at: redemption.redeemed_at || redemption.created_at,
-              });
-            }
-          });
-        }
       }
     }
 
@@ -95,6 +79,7 @@ export async function GET(request: NextRequest) {
       const { data: refunds } = await supabase
         .from('credit_transactions')
         .select('*')
+        .eq('business_id', businessId) // SECURITY: Explicit user isolation
         .eq('transaction_type', 'refund')
         .eq('related_table', 'campaigns')
         .in('related_id', campaignIds)
