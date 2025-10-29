@@ -27,6 +27,20 @@ async function verifyPaymentWithBackend(
 ) {
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+  console.log('Verifying payment with backend:', {
+    backendUrl,
+    sessionId,
+    paymentIntentId,
+    userId: metadata.userId,
+    businessId: metadata.businessId,
+    credits: metadata.credits,
+  });
+
+  // Validate backend URL is configured
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    console.error('CRITICAL: NEXT_PUBLIC_API_URL is not configured! Using fallback:', backendUrl);
+  }
+
   try {
     const response = await axios.post(
       `${backendUrl}/api/business/stripe/verify-payment`,
@@ -46,12 +60,32 @@ async function verifyPaymentWithBackend(
       }
     );
 
+    console.log('Backend verification successful:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error verifying payment with backend:', error);
+    console.error('Error verifying payment with backend:', {
+      error,
+      backendUrl,
+      sessionId,
+      paymentIntentId,
+    });
+
     if (axios.isAxiosError(error)) {
-      console.error('Backend response:', error.response?.data);
+      console.error('Backend error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        code: error.code,
+        message: error.message,
+      });
+
+      // Log connection errors separately
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        console.error('CRITICAL: Cannot connect to backend at:', backendUrl);
+        console.error('Check that NEXT_PUBLIC_API_URL is correctly configured and backend is running');
+      }
     }
+
     throw new Error('Failed to verify payment with backend');
   }
 }
@@ -112,6 +146,7 @@ async function handleCheckoutSessionCompleted(
     businessId,
     packageId,
     credits,
+    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
     amount: session.amount_total ? session.amount_total / 100 : 0,
   });
 
@@ -130,6 +165,7 @@ async function handleCheckoutSessionCompleted(
     await sendConfirmationEmail(
       session.customer_email,
       parseInt(credits),
+      // STRIPE PAYMENT AMOUNT: Convert cents to dollars for email display
       session.amount_total ? session.amount_total / 100 : 0
     );
   }
@@ -147,6 +183,7 @@ async function handlePaymentIntentSucceeded(
 ) {
   console.log('Payment intent succeeded:', {
     id: paymentIntent.id,
+    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
     amount: paymentIntent.amount / 100,
     status: paymentIntent.status,
   });
@@ -165,6 +202,7 @@ async function handlePaymentIntentFailed(
 ) {
   console.error('Payment intent failed:', {
     id: paymentIntent.id,
+    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
     amount: paymentIntent.amount / 100,
     status: paymentIntent.status,
     lastPaymentError: paymentIntent.last_payment_error,
@@ -184,6 +222,7 @@ async function handlePaymentIntentFailed(
 async function handleChargeRefunded(charge: Stripe.Charge) {
   console.log('Charge refunded:', {
     id: charge.id,
+    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
     amount: charge.amount / 100,
     refunded: charge.refunded,
   });

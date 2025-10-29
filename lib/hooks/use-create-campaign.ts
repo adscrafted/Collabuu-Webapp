@@ -153,6 +153,9 @@ export function useCreateCampaign() {
       // Invalidate campaigns list
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
 
+      // Invalidate credit balance to update the display
+      queryClient.invalidateQueries({ queryKey: ['creditBalance'] });
+
       // Show success toast
       toast({
         title: 'Campaign Created',

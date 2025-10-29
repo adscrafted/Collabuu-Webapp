@@ -95,10 +95,13 @@ export const calculateCreditPricing = (credits: number): CreditPricing => {
 
   return {
     credits: normalizedCredits,
-    price: Math.round(price * 100) / 100, // Round to 2 decimals
+    // DECIMAL ROUNDING: Round to 2 decimals for display (NOT a Stripe conversion)
+    price: Math.round(price * 100) / 100,
     perCreditPrice: tier.perCreditPrice,
     discount: tier.discount,
+    // DECIMAL ROUNDING: Round to 2 decimals for display (NOT a Stripe conversion)
     baselinePrice: Math.round(baselinePrice * 100) / 100,
+    // DECIMAL ROUNDING: Round to 2 decimals for display (NOT a Stripe conversion)
     savings: Math.round(savings * 100) / 100,
     tier,
   };

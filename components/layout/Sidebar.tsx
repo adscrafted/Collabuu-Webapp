@@ -171,7 +171,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => router.push('/profile?tab=billing')}
+                    onClick={() => router.push('/profile?tab=history')}
                     className="w-full rounded-lg bg-gradient-to-br from-pink-50 to-pink-100 p-3 hover:from-pink-100 hover:to-pink-200 transition-all"
                   >
                     <CreditCard className="h-6 w-6 text-pink-500 mx-auto" />
@@ -189,15 +189,21 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
             </TooltipProvider>
           ) : (
             <div className="rounded-lg bg-gradient-to-br from-pink-50 to-pink-100 p-4">
-              <div className="flex items-center justify-between">
-                <div>
+              <button
+                onClick={() => router.push('/profile?tab=history')}
+                className="w-full flex items-center justify-between group hover:opacity-80 transition-opacity"
+              >
+                <div className="text-left">
                   <p className="text-xs font-medium text-gray-600">Credits</p>
                   <p className="text-2xl font-bold text-pink-600">
                     {creditBalance?.credits?.toLocaleString() || '0'}
                   </p>
                 </div>
-                <CreditCard className="h-8 w-8 text-pink-500 opacity-50" />
-              </div>
+                <div className="flex items-center gap-1">
+                  <CreditCard className="h-8 w-8 text-pink-500 opacity-50" />
+                  <ChevronRight className="h-5 w-5 text-pink-600 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </button>
               <Button
                 variant="default"
                 size="sm"

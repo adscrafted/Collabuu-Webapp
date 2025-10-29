@@ -65,7 +65,8 @@ export async function createCheckoutSession({
               name: `${credits} Credits`,
               description: `Purchase ${credits.toLocaleString()} credits for Collabuu campaigns`,
             },
-            unit_amount: Math.round(price * 100), // Convert to cents
+            // STRIPE PAYMENT AMOUNT: Convert dollars to cents (Stripe requires integer cents)
+            unit_amount: Math.round(price * 100),
           },
           quantity: 1,
         },

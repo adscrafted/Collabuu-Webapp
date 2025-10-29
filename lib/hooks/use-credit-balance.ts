@@ -21,11 +21,20 @@ interface CreditBalance {
  * Fetch credit balance from backend
  * Backend endpoint: GET /api/business/credits/balance
  * Requires authentication token (businessId from token, not URL)
+ * Note: Authentication is handled by apiClient interceptor
  */
 async function fetchCreditBalance(token?: string | null): Promise<CreditBalance> {
   try {
+    // Check if token exists before making API call
+    // This provides better error messages for unauthenticated users
     if (!token) {
-      throw new Error('Authentication token required');
+      throw new Error('Authentication required. Please log in to view your credit balance.');
+    }
+
+    // Verify backend URL is configured
+    if (!process.env.NEXT_PUBLIC_API_URL) {
+      console.error('NEXT_PUBLIC_API_URL is not configured');
+      throw new Error('API configuration error. Please contact support.');
     }
 
     const response = await apiClient.get<CreditBalanceResponse>(
@@ -45,6 +54,12 @@ async function fetchCreditBalance(token?: string | null): Promise<CreditBalance>
 
     if (axios.isAxiosError(error)) {
       const message = error.response?.data?.message || error.response?.data?.error || error.message;
+
+      // Provide more helpful error messages
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Unable to connect to server. Please check your connection and try again.');
+      }
+
       throw new Error(message);
     }
 

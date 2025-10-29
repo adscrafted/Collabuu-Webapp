@@ -4,6 +4,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Generate a unique 8-character alphanumeric referral code
+function generateReferralCode(): string {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return code;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; applicationId: string }> }
@@ -73,12 +83,16 @@ export async function POST(
       );
     }
 
+    // Generate referral code for attribution tracking
+    const referralCode = generateReferralCode();
+
     // Update application status to 'accepted'
     const { error: updateError } = await supabase
       .from('campaign_applications')
       .update({
         status: 'accepted',
         reviewed_at: new Date().toISOString(),
+        referral_code: referralCode,
       })
       .eq('id', applicationId);
 

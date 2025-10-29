@@ -66,13 +66,18 @@ export async function GET(request: NextRequest) {
     // 1. Fetch credit additions (purchases)
     const { data: additions } = await supabase
       .from('credit_transactions')
-      .select('amount, created_at')
+      .select('credits, amount, created_at')
       .eq('business_id', businessId)
       .in('transaction_type', ['purchase'])
       .eq('status', 'completed');
 
     if (additions) {
-      additions.forEach((txn: any) => allTransactions.push(txn));
+      additions.forEach((txn: any) => {
+        allTransactions.push({
+          amount: txn.credits ?? txn.amount, // Use credits field (actual credits purchased) not amount field (price paid). Use ?? to handle 0 credits correctly (|| would incorrectly fall back to amount)
+          created_at: txn.created_at,
+        });
+      });
     }
 
     // 2. Fetch campaigns for reference

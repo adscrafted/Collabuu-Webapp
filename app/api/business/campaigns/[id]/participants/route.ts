@@ -36,10 +36,10 @@ export async function GET(
     const { id } = await params;
     const campaignId = id;
 
-    // Verify campaign ownership
+    // Verify campaign ownership and get credits rate
     const { data: campaign, error: campaignError } = await supabase
       .from('campaigns')
-      .select('id, business_id')
+      .select('id, business_id, credits_per_customer, credits_per_action')
       .eq('id', campaignId)
       .eq('business_id', user.id)
       .single();
@@ -93,15 +93,9 @@ export async function GET(
         // Visit count equals customer count (each unique customer is a visit)
         const visitCount = customerCount;
 
-        // Sum credits earned
-        const { data: creditsData } = await supabase
-          .from('visits')
-          .select('credits_awarded')
-          .eq('campaign_id', campaignId)
-          .eq('influencer_id', app.influencer_id)
-          .eq('status', 'verified');
-
-        const creditsEarned = creditsData?.reduce((sum, visit) => sum + (visit.credits_awarded || 0), 0) || 0;
+        // Calculate credits earned based on customer count and campaign rate
+        const creditsPerVisit = campaign.credits_per_customer || campaign.credits_per_action || 0;
+        const creditsEarned = customerCount * creditsPerVisit;
 
         // Count content submissions
         const { count: contentCount } = await supabase

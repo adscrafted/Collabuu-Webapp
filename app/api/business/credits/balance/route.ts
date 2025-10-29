@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     if (additions) {
       additions.forEach((addition: any) => {
         allTransactions.push({
-          amount: addition.amount,
+          amount: addition.credits ?? addition.amount, // Use credits field (actual credits purchased) not amount field (price paid). Use ?? to handle 0 credits correctly (|| would incorrectly fall back to amount)
           created_at: addition.created_at,
         });
       });

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         allTransactions.push({
           id: `addition_${addition.id}`,
           business_id: businessId,
-          amount: addition.amount,
+          amount: addition.credits ?? addition.amount, // Use credits field (actual credits purchased) not amount field (price paid). Use ?? to handle 0 credits correctly (|| would incorrectly fall back to amount)
           type: 'purchase',
           description: addition.description || 'Credit Purchase',
           campaign_id: null,

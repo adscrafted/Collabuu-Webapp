@@ -173,25 +173,17 @@ export async function GET(request: NextRequest) {
           // Don't fail, just set to 0
         }
 
-        // Sum credits spent
-        const { data: creditsData, error: creditsError } = await supabase
-          .from('visits')
-          .select('credits_awarded')
-          .eq('campaign_id', campaign.id)
-          .eq('status', 'verified');
-
-        if (creditsError) {
-          console.error('Error fetching credits for campaign', campaign.id, ':', creditsError);
-          // Don't fail, just set to 0
-        }
-
-        const creditsSpent = creditsData?.reduce((sum, visit) => sum + (visit.credits_awarded || 0), 0) || 0;
-
         // Count accepted influencers (same as participants for now)
         const acceptedInfluencersCount = participantsCount || 0;
 
         // Get visitor counts from map (calculated from QR code redemptions)
         const visitorCounts = visitorCountsMap.get(campaign.id) || { influencer: 0, directApp: 0, total: 0 };
+
+        // Calculate credits spent based on unique visitors and campaign rate
+        // For pay_per_customer: unique visitors × credits_per_customer
+        // For other types: can be extended based on campaign type
+        const creditsPerVisit = campaign.creditsPerCustomer || campaign.creditsPerAction || 0;
+        const creditsSpent = visitorCounts.total * creditsPerVisit;
 
         // Count content submissions
         const { count: contentSubmissionsCount, error: contentError } = await supabase
