@@ -205,8 +205,7 @@ export async function PUT(request: NextRequest) {
     // Only include fields that actually exist in the database schema
     const updateData: any = {
       business_name: businessName,
-      phone: body.phone,
-      phone_number: body.phone,
+      phone_number: body.phone,  // Database uses phone_number, not phone
       website: body.website,
       street_address: streetAddress,
       city: body.city,
@@ -240,8 +239,17 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (profileError) {
-      console.error('Error updating business profile:', profileError);
-      return NextResponse.json({ error: 'Failed to update business profile' }, { status: 500 });
+      console.error('Error updating business profile:', {
+        error: profileError,
+        message: profileError.message,
+        details: profileError.details,
+        hint: profileError.hint,
+        code: profileError.code,
+      });
+      return NextResponse.json({
+        error: 'Failed to update business profile',
+        details: profileError.message
+      }, { status: 500 });
     }
 
     return NextResponse.json(profile);
