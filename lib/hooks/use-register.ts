@@ -66,30 +66,8 @@ export function useRegister() {
           };
         }
 
-        // Step 2: Create business profile in database via backend API (if available)
-        if (authData.session) {
-          try {
-            await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/business/profile`,
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${authData.session.access_token}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  businessName: data.businessName,
-                  businessType: data.businessType,
-                  phone: data.phone,
-                  email: data.email,
-                }),
-              }
-            );
-          } catch (profileError) {
-            console.warn('Could not create business profile:', profileError);
-            // Continue anyway - profile can be created later
-          }
-        }
+        // Step 2: Store basic registration data in user metadata
+        // Full profile will be completed in onboarding flow
 
         // Check if email confirmation is required
         if (!authData.session) {
@@ -126,8 +104,8 @@ export function useRegister() {
       // Store authentication data
       loginAction(data.accessToken, data.user, data.businessId);
 
-      // Navigate to campaigns page
-      router.push('/campaigns');
+      // Navigate to onboarding to complete profile
+      router.push('/onboarding');
     },
     onError: (error) => {
       console.error('Registration failed:', error);
