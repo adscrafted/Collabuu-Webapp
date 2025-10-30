@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/hooks/use-auth'
+import { createClient } from '@/lib/supabase/client'
 import BusinessInfoStep from '@/components/onboarding/business-info-step'
 import LocationStep from '@/components/onboarding/location-step'
 import SocialMediaStep from '@/components/onboarding/social-media-step'
@@ -93,6 +94,16 @@ export default function OnboardingPage() {
     setIsLoading(true)
 
     try {
+      // Get Supabase session for authentication
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session) {
+        toast.error('Authentication error. Please log in again.')
+        router.push('/login')
+        return
+      }
+
       // Prepare social media handles (only include non-empty values)
       const socialMediaHandles: Record<string, string> = {}
       if (data.instagram) socialMediaHandles.instagram = data.instagram
@@ -107,6 +118,7 @@ export default function OnboardingPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           businessName: data.businessName,
