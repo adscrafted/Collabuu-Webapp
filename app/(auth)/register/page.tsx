@@ -29,11 +29,7 @@ const registerSchema = z
     email: z.string().email('Please enter a valid email address'),
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-      ),
+      .min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string(),
     phone: z
       .string()
@@ -341,13 +337,8 @@ export default function RegisterPage() {
               {...register('password', {
                 required: 'Password is required',
                 minLength: {
-                  value: 8,
-                  message: 'Password must be at least 8 characters',
-                },
-                pattern: {
-                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                  message:
-                    'Password must contain uppercase, lowercase, and number',
+                  value: 6,
+                  message: 'Password must be at least 6 characters',
                 },
               })}
               className={`w-full rounded-lg border ${
