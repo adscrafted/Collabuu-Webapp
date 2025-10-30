@@ -710,7 +710,7 @@ export default function LandingPage() {
                 <div className="footer-section">
                   <h4>Admin</h4>
                   <ul>
-                    <li><a href="https://app.collabuu.com" target="_blank" rel="noopener">Admin</a></li>
+                    <li><a href="/admin/login" rel="noopener">Admin</a></li>
                   </ul>
                 </div>
               </div>
