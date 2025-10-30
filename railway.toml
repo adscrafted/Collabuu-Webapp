@@ -7,5 +7,5 @@ startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
-[services.webapp]
-# Next.js webapp service configuration
+[[nixpacks.phases.setup]]
+nixPkgs = ["nodejs-20_x"]
