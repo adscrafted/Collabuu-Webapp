@@ -202,14 +202,13 @@ export async function PUT(request: NextRequest) {
     const streetAddress = body.street_address || body.streetAddress;
     const postalCode = body.postal_code || body.postalCode;
 
+    // Only include fields that actually exist in the database schema
     const updateData: any = {
       business_name: businessName,
       phone: body.phone,
       phone_number: body.phone,
-      email: body.email || user.email,
       website: body.website,
       street_address: streetAddress,
-      address: streetAddress,
       city: body.city,
       state: body.state,
       postal_code: postalCode,
@@ -217,17 +216,17 @@ export async function PUT(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    if (body.instagram_handle || body.tiktok_handle || body.youtube_channel ||
-        body.facebook_page || body.twitter_handle || body.linkedin_company) {
-      updateData.social_media_handles = {
-        instagram: body.instagram_handle || null,
-        tiktok: body.tiktok_handle || null,
-        youtube: body.youtube_channel || null,
-        facebook: body.facebook_page || null,
-        twitter: body.twitter_handle || null,
-        linkedin: body.linkedin_company || null,
-      };
-    }
+    // Handle social media handles - support both iOS nested format and Web flat format
+    // iOS sends: socialMediaHandles: { instagram: "...", facebook: "..." }
+    // Web sends: instagram_handle, facebook_page, etc.
+    const socialMedia = body.socialMediaHandles || {};
+
+    updateData.instagram_handle = body.instagram_handle || socialMedia.instagram || null;
+    updateData.tiktok_handle = body.tiktok_handle || socialMedia.tiktok || null;
+    updateData.youtube_channel = body.youtube_channel || socialMedia.youtube || null;
+    updateData.facebook_page = body.facebook_page || socialMedia.facebook || null;
+    updateData.twitter_handle = body.twitter_handle || socialMedia.twitter || null;
+    updateData.linkedin_company = body.linkedin_company || socialMedia.linkedin || null;
 
     const { data: profile, error: profileError } = await supabase
       .from('business_profiles')
