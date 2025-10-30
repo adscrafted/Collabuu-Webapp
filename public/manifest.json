@@ -1,0 +1,27 @@
+{
+  "name": "Collabuu - Connect Businesses with Influencers",
+  "short_name": "Collabuu",
+  "description": "The ultimate platform connecting businesses with influencers through advanced tokenomics and seamless collaboration.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00b366",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/landing/images/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": [
+    "business",
+    "social",
+    "marketing"
+  ]
+}

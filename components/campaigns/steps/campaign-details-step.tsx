@@ -39,7 +39,9 @@ export function CampaignDetailsStep({
   // Auto-set budget values for media events and rewards campaigns
   React.useEffect(() => {
     if (campaignType === CampaignType.MEDIA_EVENT) {
-      form.setValue('budget.totalCredits', 300);
+      // Calculate total credits based on influencer spots (300 credits per spot)
+      const spots = influencerSpots || 0;
+      form.setValue('budget.totalCredits', spots * 300);
 
       // Set default event date to 5 days from now at 12pm if not already set
       const currentEventDate = form.getValues('eventDate');
@@ -53,7 +55,7 @@ export function CampaignDetailsStep({
       form.setValue('budget.totalCredits', 0);
       form.setValue('budget.influencerSpots', 0);
     }
-  }, [campaignType]);
+  }, [campaignType, influencerSpots]);
 
   return (
     <div className="space-y-6">
@@ -258,10 +260,10 @@ export function CampaignDetailsStep({
                     </svg>
                     <div>
                       <p className="text-sm font-semibold text-pink-900">
-                        Fixed Price: 300 Credits
+                        Fixed Price: 300 Credits per Influencer
                       </p>
                       <p className="text-xs text-pink-700">
-                        Media events have a standard fixed price
+                        Total cost = 300 × number of influencer spots
                       </p>
                     </div>
                   </div>

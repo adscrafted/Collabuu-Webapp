@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,6 +31,12 @@ export default function NewCampaignPage() {
   const router = useRouter();
   const { token } = useAuthStore();
   const { data: creditBalance } = useCreditBalance(token);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top whenever step changes
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
+  }, [currentStep]);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
@@ -81,6 +87,12 @@ export default function NewCampaignPage() {
     }
   };
 
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleEditStep = (step: number) => {
     setCurrentStep(step);
   };
@@ -119,6 +131,9 @@ export default function NewCampaignPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 py-8">
+      {/* Scroll anchor */}
+      <div ref={topRef} />
+
       {/* Header with Breadcrumb */}
       <div>
         <Breadcrumb
@@ -195,14 +210,32 @@ export default function NewCampaignPage() {
 
       {/* Step Content */}
       <Card className="p-8">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          // Prevent any automatic form submission
+          // The Create Campaign button will explicitly call handleSubmit
+          return false;
+        }}>
           {currentStep === 0 && <CampaignTypeStep form={form} />}
           {currentStep === 1 && <BasicInfoStep form={form} />}
           {currentStep === 2 && <CampaignDetailsStep form={form} availableCredits={creditBalance?.credits ?? 0} />}
           {currentStep === 3 && <ReviewStep form={form} onEditStep={handleEditStep} />}
 
           {/* Navigation Buttons */}
-          <div className="mt-8 flex items-center justify-end pt-6">
+          <div className="mt-8 flex items-center justify-between pt-6">
+            <div className="flex gap-3">
+              {currentStep > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={isLoading}
+                  className="border-2 border-gray-400 hover:border-gray-500"
+                >
+                  Back
+                </Button>
+              )}
+            </div>
             <div className="flex gap-3">
               <Button
                 type="button"
@@ -215,11 +248,11 @@ export default function NewCampaignPage() {
               </Button>
               {currentStep < STEPS.length - 1 ? (
                 <Button type="button" onClick={handleNext} disabled={isLoading}>
-                  Next
+                  Continue
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={isLoading}>
+                <Button type="button" onClick={() => handleSubmit()} disabled={isLoading}>
                   <Rocket className="mr-2 h-4 w-4" />
                   Create Campaign
                 </Button>

@@ -42,6 +42,7 @@ export function DateRangePicker({
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 id="startDate"
                 variant="outline"
                 className={cn(
@@ -77,6 +78,7 @@ export function DateRangePicker({
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 id="endDate"
                 variant="outline"
                 className={cn(

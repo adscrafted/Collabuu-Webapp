@@ -92,6 +92,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
               src={campaign.imageUrl}
               alt={campaign.title}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-200 group-hover:scale-105"
             />
           ) : (
