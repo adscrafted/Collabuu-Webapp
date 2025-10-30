@@ -11,11 +11,18 @@ import {
   Briefcase,
   Loader2,
   AlertCircle,
+  User,
 } from 'lucide-react';
 import { useRegister } from '@/lib/hooks/use-register';
 
 const registerSchema = z
   .object({
+    firstName: z
+      .string()
+      .min(2, 'First name must be at least 2 characters'),
+    lastName: z
+      .string()
+      .min(2, 'Last name must be at least 2 characters'),
     businessName: z
       .string()
       .min(2, 'Business name must be at least 2 characters'),
@@ -96,6 +103,84 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="firstName"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              First Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                id="firstName"
+                autoComplete="given-name"
+                {...register('firstName', {
+                  required: 'First name is required',
+                  minLength: {
+                    value: 2,
+                    message: 'First name must be at least 2 characters',
+                  },
+                })}
+                className={`w-full rounded-lg border ${
+                  errors.firstName ? 'border-red-500' : 'border-gray-300'
+                } py-3 pl-10 pr-4 transition-all focus:border-pink-500 focus:outline-none focus:ring-2 ${
+                  errors.firstName
+                    ? 'focus:ring-red-500/20'
+                    : 'focus:ring-pink-500/20'
+                }`}
+                placeholder="John"
+                disabled={isPending}
+              />
+            </div>
+            {errors.firstName && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.firstName.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="lastName"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Last Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                id="lastName"
+                autoComplete="family-name"
+                {...register('lastName', {
+                  required: 'Last name is required',
+                  minLength: {
+                    value: 2,
+                    message: 'Last name must be at least 2 characters',
+                  },
+                })}
+                className={`w-full rounded-lg border ${
+                  errors.lastName ? 'border-red-500' : 'border-gray-300'
+                } py-3 pl-10 pr-4 transition-all focus:border-pink-500 focus:outline-none focus:ring-2 ${
+                  errors.lastName
+                    ? 'focus:ring-red-500/20'
+                    : 'focus:ring-pink-500/20'
+                }`}
+                placeholder="Doe"
+                disabled={isPending}
+              />
+            </div>
+            {errors.lastName && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.lastName.message}
+              </p>
+            )}
+          </div>
+        </div>
+
         <div>
           <label
             htmlFor="businessName"

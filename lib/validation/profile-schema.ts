@@ -38,7 +38,11 @@ export type SocialMediaFormData = z.infer<typeof socialMediaSchema>;
 
 // Password Change Schema
 export const passwordSchema = z.string()
-  .min(6, 'Password must be at least 6 characters');
+  .min(8, 'Password must be at least 8 characters')
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+  );
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -84,7 +88,16 @@ export type DisplaySettingsFormData = z.infer<typeof displaySettingsSchema>;
 
 // Password Strength Calculator
 export const calculatePasswordStrength = (password: string): 'weak' | 'medium' | 'strong' => {
-  if (password.length < 6) return 'weak';
-  if (password.length < 10) return 'medium';
+  // Check minimum requirements
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+  const requirementsMet = [hasMinLength, hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length;
+
+  if (requirementsMet < 4) return 'weak';
+  if (requirementsMet === 4 || (requirementsMet === 5 && password.length < 12)) return 'medium';
   return 'strong';
 };

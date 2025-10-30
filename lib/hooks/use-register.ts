@@ -7,6 +7,8 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import type { User } from '@/lib/stores/auth-store';
 
 export interface RegisterData {
+  firstName: string;
+  lastName: string;
   businessName: string;
   email: string;
   password: string;
@@ -45,6 +47,8 @@ export function useRegister() {
           password: data.password,
           options: {
             data: {
+              firstName: data.firstName,
+              lastName: data.lastName,
               name: data.businessName,
               role: 'business',
               businessType: data.businessType,
@@ -83,7 +87,8 @@ export function useRegister() {
           user: {
             id: authData.user.id,
             email: authData.user.email!,
-            name: data.businessName,
+            name: `${data.firstName} ${data.lastName}`,
+            businessName: data.businessName,
             role: 'business',
           },
           businessId: authData.user.id,
