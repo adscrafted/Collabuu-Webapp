@@ -243,8 +243,34 @@ export async function PUT(request: NextRequest) {
     console.log('Upserting business profile with data:', {
       user_id: user.id,
       updateData,
-      receivedBody: body,
     });
+
+    // CRITICAL: Ensure user_profiles entry exists BEFORE creating business_profiles
+    // The business_profiles table has a foreign key constraint on user_profiles
+    const { error: userProfileError } = await supabase
+      .from('user_profiles')
+      .upsert({
+        user_id: user.id,
+        email: user.email,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id',
+      });
+
+    if (userProfileError) {
+      console.error('Error creating/updating user profile:', {
+        error: userProfileError,
+        message: userProfileError.message,
+        details: userProfileError.details,
+        code: userProfileError.code,
+      });
+      return NextResponse.json({
+        error: 'Failed to create user profile',
+        details: userProfileError.message
+      }, { status: 500 });
+    }
+
+    console.log('User profile ensured, now upserting business profile');
 
     const { data: profile, error: profileError } = await supabase
       .from('business_profiles')
