@@ -122,7 +122,6 @@ export default function OnboardingPage() {
         },
         body: JSON.stringify({
           businessName: data.businessName,
-          address: `${data.streetAddress}, ${data.city}, ${data.state} ${data.postalCode}`,
           streetAddress: data.streetAddress,
           city: data.city,
           state: data.state,
@@ -130,9 +129,13 @@ export default function OnboardingPage() {
           country: data.country,
           phone: data.phone,
           website: data.website || '',
-          ...Object.fromEntries(
-            Object.entries(socialMediaHandles).map(([key, value]) => [`${key}_handle`, value])
-          ),
+          // Map social media handles to correct API field names
+          ...(socialMediaHandles.instagram && { instagram_handle: socialMediaHandles.instagram }),
+          ...(socialMediaHandles.facebook && { facebook_page: socialMediaHandles.facebook }),
+          ...(socialMediaHandles.twitter && { twitter_handle: socialMediaHandles.twitter }),
+          ...(socialMediaHandles.tiktok && { tiktok_handle: socialMediaHandles.tiktok }),
+          ...(socialMediaHandles.youtube && { youtube_channel: socialMediaHandles.youtube }),
+          ...(socialMediaHandles.linkedin && { linkedin_company: socialMediaHandles.linkedin }),
         }),
       })
 

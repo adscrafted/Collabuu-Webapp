@@ -197,17 +197,22 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
+    // Support both camelCase (from web) and snake_case (from iOS) field names
+    const businessName = body.business_name || body.businessName;
+    const streetAddress = body.street_address || body.streetAddress;
+    const postalCode = body.postal_code || body.postalCode;
+
     const updateData: any = {
-      business_name: body.business_name,
+      business_name: businessName,
       phone: body.phone,
       phone_number: body.phone,
-      email: body.email,
+      email: body.email || user.email,
       website: body.website,
-      street_address: body.street_address,
-      address: body.street_address,
+      street_address: streetAddress,
+      address: streetAddress,
       city: body.city,
       state: body.state,
-      postal_code: body.postal_code,
+      postal_code: postalCode,
       country: body.country,
       updated_at: new Date().toISOString(),
     };
