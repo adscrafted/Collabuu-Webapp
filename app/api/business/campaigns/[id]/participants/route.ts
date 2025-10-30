@@ -115,7 +115,7 @@ export async function GET(
         const firstName = app.influencer?.first_name || '';
         const lastName = app.influencer?.last_name || '';
         const fullNameFromParts = `${firstName} ${lastName}`.trim();
-        const displayName = fullNameFromParts || app.influencer?.full_name || app.influencer?.username || 'Unknown';
+        const displayName = fullNameFromParts || app.influencer?.full_name || app.influencer?.username || null;
 
         return {
           id: app.id,

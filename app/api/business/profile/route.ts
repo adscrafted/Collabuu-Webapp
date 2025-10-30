@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         id: user.id,
         userId: user.id,
-        business_name: user.user_metadata?.name || '',
+        business_name: user.user_metadata?.name,
         email: user.email || '',
         phone: '',
         phoneNumber: '',
@@ -56,8 +56,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Log raw database data for debugging
-    console.log('Raw profile from DB:', JSON.stringify(profile, null, 2));
+    // Profile data retrieved successfully
 
     // Calculate current credit balance from transaction history (source of truth)
     const businessId = user.id;
@@ -174,7 +173,6 @@ export async function GET(request: NextRequest) {
       updatedAt: profile.updated_at,
     };
 
-    console.log('Transformed profile:', JSON.stringify(transformedProfile, null, 2));
     return NextResponse.json(transformedProfile);
   } catch (error) {
     console.error('Business profile API error:', error);

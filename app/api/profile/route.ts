@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // For now, we'll use the user ID as the business ID
     // In a full implementation, you would query a businesses table
     const businessId = user.id;
-    const businessName = user.user_metadata?.name || user.email?.split('@')[0] || 'Business';
+    const businessName = user.user_metadata?.name;
 
     return NextResponse.json({
       success: true,

@@ -25,20 +25,17 @@ async function verifyPaymentWithBackend(
   paymentIntentId: string,
   metadata: Stripe.Metadata
 ) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
-  console.log('Verifying payment with backend:', {
-    backendUrl,
-    sessionId,
-    paymentIntentId,
-    userId: metadata.userId,
-    businessId: metadata.businessId,
-    credits: metadata.credits,
-  });
-
   // Validate backend URL is configured
   if (!process.env.NEXT_PUBLIC_API_URL) {
-    console.error('CRITICAL: NEXT_PUBLIC_API_URL is not configured! Using fallback:', backendUrl);
+    throw new Error(
+      'NEXT_PUBLIC_API_URL is not configured. Cannot verify payment without backend API URL.'
+    );
+  }
+
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Verifying payment with backend');
   }
 
   try {
@@ -60,29 +57,24 @@ async function verifyPaymentWithBackend(
       }
     );
 
-    console.log('Backend verification successful:', response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Backend verification successful');
+    }
     return response.data;
   } catch (error) {
-    console.error('Error verifying payment with backend:', {
-      error,
-      backendUrl,
-      sessionId,
-      paymentIntentId,
-    });
+    console.error('Error verifying payment with backend');
 
     if (axios.isAxiosError(error)) {
       console.error('Backend error details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
-        data: error.response?.data,
         code: error.code,
         message: error.message,
       });
 
       // Log connection errors separately
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        console.error('CRITICAL: Cannot connect to backend at:', backendUrl);
-        console.error('Check that NEXT_PUBLIC_API_URL is correctly configured and backend is running');
+        console.error('CRITICAL: Cannot connect to backend. Check NEXT_PUBLIC_API_URL configuration');
       }
     }
 
@@ -100,7 +92,9 @@ async function sendConfirmationEmail(
   amount: number
 ) {
   // Implement your email service integration here
-  console.log(`Confirmation email queued for ${email}: ${credits} credits ($${amount})`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Confirmation email queued');
+  }
 }
 
 /**
@@ -119,7 +113,9 @@ async function handleCheckoutSessionCompleted(
 
   // Check for duplicate processing
   if (processedPayments.has(paymentIntentId)) {
-    console.log(`Payment ${paymentIntentId} already processed, skipping`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Payment already processed, skipping');
+    }
     return {
       success: true,
       message: 'Payment already processed',
@@ -139,16 +135,9 @@ async function handleCheckoutSessionCompleted(
     throw new Error('Incomplete metadata in checkout session');
   }
 
-  console.log('Processing payment:', {
-    sessionId: session.id,
-    paymentIntentId,
-    userId,
-    businessId,
-    packageId,
-    credits,
-    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
-    amount: session.amount_total ? session.amount_total / 100 : 0,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Processing payment');
+  }
 
   // Verify payment with backend and add credits
   const result = await verifyPaymentWithBackend(
@@ -170,7 +159,9 @@ async function handleCheckoutSessionCompleted(
     );
   }
 
-  console.log('Payment processed successfully:', result);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Payment processed successfully');
+  }
 
   return result;
 }
@@ -181,12 +172,11 @@ async function handleCheckoutSessionCompleted(
 async function handlePaymentIntentSucceeded(
   paymentIntent: Stripe.PaymentIntent
 ) {
-  console.log('Payment intent succeeded:', {
-    id: paymentIntent.id,
-    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
-    amount: paymentIntent.amount / 100,
-    status: paymentIntent.status,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Payment intent succeeded:', {
+      status: paymentIntent.status,
+    });
+  }
 
   return {
     success: true,
@@ -201,11 +191,8 @@ async function handlePaymentIntentFailed(
   paymentIntent: Stripe.PaymentIntent
 ) {
   console.error('Payment intent failed:', {
-    id: paymentIntent.id,
-    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
-    amount: paymentIntent.amount / 100,
     status: paymentIntent.status,
-    lastPaymentError: paymentIntent.last_payment_error,
+    errorCode: paymentIntent.last_payment_error?.code,
   });
 
   // Note: Implement email notification to user about payment failure
@@ -220,12 +207,11 @@ async function handlePaymentIntentFailed(
  * Handle charge.refunded event
  */
 async function handleChargeRefunded(charge: Stripe.Charge) {
-  console.log('Charge refunded:', {
-    id: charge.id,
-    // STRIPE PAYMENT AMOUNT: Convert cents to dollars for logging/display
-    amount: charge.amount / 100,
-    refunded: charge.refunded,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Charge refunded:', {
+      refunded: charge.refunded,
+    });
+  }
 
   // Note: Implement backend API call to deduct credits from user account on refund
 

@@ -74,7 +74,7 @@ export function BudgetCalculator({
           {campaignType === CampaignType.MEDIA_EVENT && (
             <>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-700">Fixed price:</span>
+                <span className="text-gray-700">Price per influencer:</span>
                 <span className="font-semibold text-gray-900">300 credits</span>
               </div>
               <div className="flex justify-between text-sm">
@@ -82,6 +82,10 @@ export function BudgetCalculator({
                 <span className="font-semibold text-gray-900">
                   {(influencerSpots || 0).toLocaleString()}
                 </span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Calculation:</span>
+                <span>300 × {(influencerSpots || 0).toLocaleString()}</span>
               </div>
             </>
           )}

@@ -95,7 +95,8 @@ export function InfluencerApplicationCard({
   };
 
   const getInitials = () => {
-    const name = application.influencerName || 'U';
+    const name = application.influencerName;
+    if (!name) return '';
     const parts = name.split(' ');
     if (parts.length >= 2) {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -122,9 +123,11 @@ export function InfluencerApplicationCard({
 
           <div className="flex-1 min-w-0">
             {/* Name */}
-            <h3 className="text-[15px] font-semibold text-gray-900 truncate leading-tight">
-              {application.influencerName || 'Unknown'}
-            </h3>
+            {application.influencerName && (
+              <h3 className="text-[15px] font-semibold text-gray-900 truncate leading-tight">
+                {application.influencerName}
+              </h3>
+            )}
 
             {/* Username/Handle */}
             <div className="text-[13px] text-gray-500 truncate mt-1">

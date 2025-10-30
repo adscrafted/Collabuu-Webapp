@@ -48,7 +48,7 @@ export function useAuth() {
             id: session.user.id,
             email: session.user.email!,
             // Preserve business name/avatar/phone if already set
-            name: existingUser?.name || existingUser?.businessName || session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            name: existingUser?.name || existingUser?.businessName,
             businessName: existingUser?.businessName,
             role: session.user.user_metadata?.role || 'business',
             avatar: existingUser?.avatar,
@@ -85,7 +85,7 @@ export function useAuth() {
             id: session.user.id,
             email: session.user.email!,
             // Preserve business name/avatar/phone if already set
-            name: existingUser?.name || existingUser?.businessName || session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            name: existingUser?.name || existingUser?.businessName,
             businessName: existingUser?.businessName,
             role: session.user.user_metadata?.role || 'business',
             avatar: existingUser?.avatar,

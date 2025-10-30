@@ -1,46 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { transformKeysToCamelCase } from '@/lib/utils';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { authenticateAdmin, logAdminApiAction, logAdminApiError } from '@/lib/auth/admin-middleware';
+import { AdminLevel } from '@/lib/auth/admin';
 
 /**
  * GET /api/admin/withdrawals/[id]
  * Get specific withdrawal request details
+ *
+ * SECURITY:
+ * - Requires admin authentication (viewer level or higher)
+ * - Logs all access to audit trail
+ * - Rate limited to prevent abuse
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+  // Authenticate admin with viewer level (read-only access)
+  const authResult = await authenticateAdmin(request, {
+    requiredLevel: AdminLevel.VIEWER,
+    action: 'withdrawal.view',
+    rateLimitPerMinute: 120, // 120 requests per minute
+  });
+
+  if (!authResult.authorized || !authResult.context) {
+    // Log unauthorized access attempt
+    if (authResult.context) {
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.view',
+        'withdrawal',
+        'Unauthorized access attempt'
       );
     }
+    return authResult.response!;
+  }
 
-    const token = authHeader.substring(7);
+  try {
+    const { id } = await params;
 
     // Create Supabase client with service role key
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify the JWT token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
-    // TODO: Verify admin role
-
-    const { id } = await params;
+    const supabase = createServiceRoleClient();
 
     // Fetch withdrawal request with influencer details
     const { data: withdrawal, error: withdrawalError } = await supabase
@@ -51,12 +52,32 @@ export async function GET(
 
     if (withdrawalError) {
       if (withdrawalError.code === 'PGRST116') {
+        // Log not found attempt
+        await logAdminApiError(
+          authResult.context,
+          'withdrawal.view',
+          'withdrawal',
+          `Withdrawal request not found: ${id}`,
+          id
+        );
+
         return NextResponse.json(
           { error: 'Withdrawal request not found' },
           { status: 404 }
         );
       }
+
       console.error('Error fetching withdrawal:', withdrawalError);
+
+      // Log database error
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.view',
+        'withdrawal',
+        `Database error: ${withdrawalError.message}`,
+        id
+      );
+
       return NextResponse.json(
         { error: 'Failed to fetch withdrawal request', details: withdrawalError.message },
         { status: 500 }
@@ -74,9 +95,31 @@ export async function GET(
       influencerAvatar: influencerData?.avatar_url,
     };
 
+    // Log successful access to audit trail
+    await logAdminApiAction(
+      authResult.context,
+      'withdrawal.view',
+      'withdrawal',
+      id,
+      {
+        influencerId: withdrawal.influencer_id,
+        status: withdrawal.status,
+        amount: withdrawal.amount,
+      }
+    );
+
     return NextResponse.json(enrichedWithdrawal);
   } catch (error) {
     console.error('Get withdrawal API error:', error);
+
+    // Log error to audit trail
+    await logAdminApiError(
+      authResult.context,
+      'withdrawal.view',
+      'withdrawal',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+
     return NextResponse.json(
       {
         error: 'Internal server error',

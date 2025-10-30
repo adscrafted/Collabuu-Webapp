@@ -27,9 +27,13 @@ export function AccountTab() {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Label>Email Address</Label>
-              <p className="text-sm text-gray-500 mt-1">
-                {accountSettings?.email || 'Loading...'}
-              </p>
+              {accountSettings?.email ? (
+                <p className="text-sm text-gray-500 mt-1">
+                  {accountSettings.email}
+                </p>
+              ) : (
+                <div className="mt-1 h-5 w-48 animate-pulse rounded bg-gray-200" />
+              )}
             </div>
           </div>
 

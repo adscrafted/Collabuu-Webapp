@@ -39,7 +39,7 @@ export default function CampaignDetailPage() {
       [CampaignStatus.EXPIRED]: { label: 'Expired', variant: 'destructive' as const },
     };
 
-    const config = statusConfig[status] || { label: status || 'Unknown', variant: 'secondary' as const };
+    const config = statusConfig[status] || { label: status || '', variant: 'secondary' as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 

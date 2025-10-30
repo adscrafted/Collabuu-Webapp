@@ -88,9 +88,11 @@ export function WithdrawalRequestsTable({
               <TableRow key={withdrawal.id} className="hover:bg-gray-50">
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">
-                      {withdrawal.influencerName || 'Unknown'}
-                    </span>
+                    {withdrawal.influencerName && (
+                      <span className="font-medium text-gray-900">
+                        {withdrawal.influencerName}
+                      </span>
+                    )}
                     {withdrawal.influencerEmail && (
                       <span className="text-sm text-gray-500">
                         {withdrawal.influencerEmail}

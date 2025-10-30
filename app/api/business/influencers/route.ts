@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         const firstName = userProfile.first_name || '';
         const lastName = userProfile.last_name || '';
         const fullNameFromParts = `${firstName} ${lastName}`.trim();
-        const displayName = fullNameFromParts || userProfile.full_name || userProfile.username || 'Unknown';
+        const displayName = fullNameFromParts || userProfile.full_name || userProfile.username || null;
 
         // Find existing application status
         const existingApp = existingApplications.find(

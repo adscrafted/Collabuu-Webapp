@@ -109,7 +109,7 @@ export function useLogin() {
           user: {
             id: data.user.id,
             email: data.user.email!,
-            name: businessName || data.user.user_metadata?.name || data.user.email!.split('@')[0],
+            name: businessName,
             businessName: businessName,
             role: data.user.user_metadata?.role || 'business',
             avatar: logoUrl,

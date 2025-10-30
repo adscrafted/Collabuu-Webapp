@@ -1,7 +1,24 @@
 import axios from 'axios';
 
+// Dynamically determine base URL
+// - In browser: use current origin (works on any port)
+// - In server/build: use env variable (for production or SSR)
+const getBaseURL = () => {
+  // Client-side: use current origin
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  // Server-side: require env variable
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    throw new Error(
+      'NEXT_PUBLIC_API_URL is not configured. Please add it to your environment variables.'
+    );
+  }
+  return process.env.NEXT_PUBLIC_API_URL;
+};
+
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },

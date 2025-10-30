@@ -1,40 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { authenticateAdmin, logAdminApiAction, logAdminApiError } from '@/lib/auth/admin-middleware';
+import { AdminLevel } from '@/lib/auth/admin';
 
 /**
  * GET /api/admin/withdrawals/stats
  * Get withdrawal statistics and aggregates
+ *
+ * SECURITY:
+ * - Requires admin authentication (viewer level or higher)
+ * - Logs all access to audit trail
+ * - Rate limited to prevent abuse
  */
 export async function GET(request: NextRequest) {
+  // Authenticate admin with viewer level (read-only access)
+  const authResult = await authenticateAdmin(request, {
+    requiredLevel: AdminLevel.VIEWER,
+    action: 'withdrawal.stats',
+    rateLimitPerMinute: 60, // 60 requests per minute
+  });
+
+  if (!authResult.authorized || !authResult.context) {
+    // Log unauthorized access attempt
+    if (authResult.context) {
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.stats',
+        'withdrawal',
+        'Unauthorized access attempt'
+      );
+    }
+    return authResult.response!;
+  }
+
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-
     // Create Supabase client with service role key for admin access
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify the JWT token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
-    // TODO: Add admin role verification
+    const supabase = createServiceRoleClient();
 
     // Fetch all withdrawal requests
     const { data: withdrawals, error: withdrawalsError } = await supabase
@@ -43,6 +44,15 @@ export async function GET(request: NextRequest) {
 
     if (withdrawalsError) {
       console.error('Error fetching withdrawals for stats:', withdrawalsError);
+
+      // Log error to audit trail
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.stats',
+        'withdrawal',
+        `Database error: ${withdrawalsError.message}`
+      );
+
       return NextResponse.json(
         { error: 'Failed to fetch withdrawal statistics', details: withdrawalsError.message },
         { status: 500 }
@@ -82,9 +92,27 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Log successful access to audit trail
+    await logAdminApiAction(
+      authResult.context,
+      'withdrawal.stats',
+      'withdrawal',
+      undefined,
+      { resultCount: withdrawals?.length || 0 }
+    );
+
     return NextResponse.json(stats);
   } catch (error) {
     console.error('Admin withdrawal stats API error:', error);
+
+    // Log error to audit trail
+    await logAdminApiError(
+      authResult.context,
+      'withdrawal.stats',
+      'withdrawal',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+
     return NextResponse.json(
       {
         error: 'Internal server error',

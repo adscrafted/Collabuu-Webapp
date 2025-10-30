@@ -47,12 +47,14 @@ export function WithdrawalDetailCard({ withdrawal }: WithdrawalDetailCardProps) 
             Influencer Information
           </h3>
           <div className="space-y-2 pl-6">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Name:</span>
-              <span className="font-medium text-gray-900">
-                {withdrawal.influencerName || 'N/A'}
-              </span>
-            </div>
+            {withdrawal.influencerName && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Name:</span>
+                <span className="font-medium text-gray-900">
+                  {withdrawal.influencerName}
+                </span>
+              </div>
+            )}
             {withdrawal.influencerEmail && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Email:</span>

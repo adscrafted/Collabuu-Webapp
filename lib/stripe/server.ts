@@ -52,7 +52,13 @@ export async function createCheckoutSession({
 }: CreateCheckoutSessionParams): Promise<Stripe.Checkout.Session> {
   try {
     // Determine base URL for redirects
-    const baseUrl = origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = origin || process.env.NEXT_PUBLIC_APP_URL;
+
+    if (!baseUrl) {
+      throw new Error(
+        'Unable to determine base URL. Please provide origin or set NEXT_PUBLIC_APP_URL environment variable.'
+      );
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',

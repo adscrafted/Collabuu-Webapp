@@ -63,11 +63,11 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
   const campaignType = getCampaignType(campaign);
 
   const typeConfig = campaignTypeConfig[campaignType] || {
-    label: campaignType || 'Unknown',
+    label: campaignType || '',
     color: 'bg-gray-100 text-gray-700 border-gray-200',
   };
   const statusConfig = campaignStatusConfig[campaign.status] || {
-    label: campaign.status || 'Unknown',
+    label: campaign.status || '',
     color: 'bg-gray-100 text-gray-700 border-gray-200',
   };
 

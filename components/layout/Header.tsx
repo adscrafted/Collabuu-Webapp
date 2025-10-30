@@ -62,17 +62,19 @@ export function Header({ onMenuClick }: HeaderProps) {
             <Avatar className="h-8 w-8">
               <AvatarImage src={user?.avatar} alt="User" />
               <AvatarFallback>
-                {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+                {(user?.role === 'business' ? user?.businessName : user?.name)?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || ''}
               </AvatarFallback>
             </Avatar>
-            <div className="hidden min-w-[110px] text-left sm:block">
-              <p className="text-sm font-semibold text-text-primary">
-                {user?.name || user?.email?.split('@')[0] || 'User'}
-              </p>
-              <p className="text-xs text-text-secondary">
-                {user?.role || 'Business'}
-              </p>
-            </div>
+            {(user?.role === 'business' ? user?.businessName : user?.name) && (
+              <div className="hidden min-w-[110px] text-left sm:block">
+                <p className="text-sm font-semibold text-text-primary">
+                  {user?.role === 'business' ? user?.businessName : user?.name}
+                </p>
+                <p className="text-xs text-text-secondary">
+                  {user?.role === 'business' ? 'Business' : 'Influencer'}
+                </p>
+              </div>
+            )}
             <ChevronDown
               className={cn(
                 'hidden h-4 w-4 text-gray-400 transition-transform sm:block',
@@ -93,12 +95,14 @@ export function Header({ onMenuClick }: HeaderProps) {
               {/* Menu */}
               <div className="absolute right-0 top-full z-20 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-background shadow-lg">
                 {/* User Info - Mobile */}
-                <div className="border-b border-border p-3 sm:hidden">
-                  <p className="font-semibold text-text-primary">
-                    {user?.name || user?.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-sm text-text-secondary">{user?.email || ''}</p>
-                </div>
+                {(user?.role === 'business' ? user?.businessName : user?.name) && (
+                  <div className="border-b border-border p-3 sm:hidden">
+                    <p className="font-semibold text-text-primary">
+                      {user?.role === 'business' ? user?.businessName : user?.name}
+                    </p>
+                    <p className="text-sm text-text-secondary">{user?.email || ''}</p>
+                  </div>
+                )}
 
                 {/* Menu Items */}
                 <div className="py-1">

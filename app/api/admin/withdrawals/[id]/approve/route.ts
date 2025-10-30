@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { transformKeysToCamelCase } from '@/lib/utils';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { authenticateAdmin, logAdminApiAction, logAdminApiError } from '@/lib/auth/admin-middleware';
+import { AdminLevel } from '@/lib/auth/admin';
 import { sendEmail } from '@/lib/email/service';
 import { WithdrawalApprovedEmail } from '@/lib/email/templates';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * PATCH /api/admin/withdrawals/[id]/approve
  * Approve a withdrawal request
+ *
+ * SECURITY:
+ * - Requires admin authentication (moderator level or higher)
+ * - Logs all approval actions to audit trail with old/new values
+ * - Rate limited to prevent abuse
+ * - Tracks admin who approved the withdrawal
  *
  * Request body:
  * {
@@ -20,52 +25,69 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Authenticate admin with moderator level (can approve/reject)
+  const authResult = await authenticateAdmin(request, {
+    requiredLevel: AdminLevel.MODERATOR,
+    action: 'withdrawal.approve',
+    rateLimitPerMinute: 30, // 30 approvals per minute max
+  });
+
+  if (!authResult.authorized || !authResult.context) {
+    // Log unauthorized access attempt
+    if (authResult.context) {
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.approve',
+        'withdrawal',
+        'Unauthorized approval attempt'
+      );
+    }
+    return authResult.response!;
+  }
+
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-
-    // Create Supabase client with service role key
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify the JWT token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
-    // TODO: Verify admin role
-
     const { id } = await params;
     const body = await request.json();
     const { notes } = body;
 
+    // Create Supabase client with service role key
+    const supabase = createServiceRoleClient();
+
     // First, fetch the current withdrawal to verify it exists and check status
     const { data: currentWithdrawal, error: fetchError } = await supabase
       .from('withdrawal_requests')
-      .select('status, influencer_id, amount')
+      .select('status, influencer_id, amount, credits')
       .eq('id', id)
       .single();
 
     if (fetchError) {
       if (fetchError.code === 'PGRST116') {
+        // Log not found error
+        await logAdminApiError(
+          authResult.context,
+          'withdrawal.approve',
+          'withdrawal',
+          `Withdrawal request not found: ${id}`,
+          id
+        );
+
         return NextResponse.json(
           { error: 'Withdrawal request not found' },
           { status: 404 }
         );
       }
+
       console.error('Error fetching withdrawal:', fetchError);
+
+      // Log database error
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.approve',
+        'withdrawal',
+        `Database error: ${fetchError.message}`,
+        id
+      );
+
       return NextResponse.json(
         { error: 'Failed to fetch withdrawal request', details: fetchError.message },
         { status: 500 }
@@ -74,6 +96,15 @@ export async function PATCH(
 
     // Verify the withdrawal is in pending status
     if (currentWithdrawal.status !== 'pending') {
+      // Log invalid state transition attempt
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.approve',
+        'withdrawal',
+        `Invalid status transition: Cannot approve withdrawal with status ${currentWithdrawal.status}`,
+        id
+      );
+
       return NextResponse.json(
         { error: `Cannot approve withdrawal with status: ${currentWithdrawal.status}` },
         { status: 400 }
@@ -100,6 +131,16 @@ export async function PATCH(
 
     if (updateError) {
       console.error('Error approving withdrawal:', updateError);
+
+      // Log update error
+      await logAdminApiError(
+        authResult.context,
+        'withdrawal.approve',
+        'withdrawal',
+        `Failed to update withdrawal: ${updateError.message}`,
+        id
+      );
+
       return NextResponse.json(
         { error: 'Failed to approve withdrawal request', details: updateError.message },
         { status: 500 }
@@ -117,6 +158,22 @@ export async function PATCH(
       influencerAvatar: influencerData?.avatar_url,
     };
 
+    // Log successful approval to audit trail
+    await logAdminApiAction(
+      authResult.context,
+      'withdrawal.approve',
+      'withdrawal',
+      id,
+      {
+        influencerId: currentWithdrawal.influencer_id,
+        amount: currentWithdrawal.amount,
+        credits: currentWithdrawal.credits,
+        notes: notes || null,
+        oldValues: { status: currentWithdrawal.status },
+        newValues: { status: 'approved', processed_at: updateData.processed_at },
+      }
+    );
+
     // Send email notification to influencer about approval
     if (influencerData?.email) {
       try {
@@ -131,16 +188,27 @@ export async function PATCH(
             etransferEmail: updatedWithdrawal.etransfer_email,
           }),
         });
-        console.log(`Approval email sent to ${influencerData.email}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Approval email sent');
+        }
       } catch (emailError) {
         // Log error but don't fail the request
-        console.error('Failed to send approval email:', emailError);
+        console.error('Failed to send approval email');
       }
     }
 
     return NextResponse.json(enrichedWithdrawal);
   } catch (error) {
     console.error('Approve withdrawal API error:', error);
+
+    // Log error to audit trail
+    await logAdminApiError(
+      authResult.context,
+      'withdrawal.approve',
+      'withdrawal',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+
     return NextResponse.json(
       {
         error: 'Internal server error',

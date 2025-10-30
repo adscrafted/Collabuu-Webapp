@@ -95,7 +95,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Get origin from request headers for redirect URLs
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL;
+
+    if (!origin) {
+      return NextResponse.json(
+        {
+          error: 'Configuration error',
+          details: 'Unable to determine application URL. Please set NEXT_PUBLIC_APP_URL environment variable.',
+        },
+        { status: 500 }
+      );
+    }
 
     // Create checkout session with validated pricing
     const session = await createCheckoutSession({

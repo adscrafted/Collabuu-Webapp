@@ -159,7 +159,7 @@ export function ContentSubmissionCard({
   };
 
   const getInitials = (name?: string) => {
-    if (!name) return '??';
+    if (!name) return '';
     return name
       .split(' ')
       .map((n) => n[0])

@@ -94,12 +94,12 @@ export function BusinessProfileTab({ onFormChange, onSubmit }: BusinessProfileTa
       });
 
       socialMediaForm.reset({
-        instagram: profile.socialMedia?.instagram || '',
-        tiktok: profile.socialMedia?.tiktok || '',
-        youtube: profile.socialMedia?.youtube || '',
-        facebook: profile.socialMedia?.facebook || '',
-        twitter: profile.socialMedia?.twitter || '',
-        linkedin: profile.socialMedia?.linkedin || '',
+        instagram: profile.socialMedia?.instagram ?? undefined,
+        tiktok: profile.socialMedia?.tiktok ?? undefined,
+        youtube: profile.socialMedia?.youtube ?? undefined,
+        facebook: profile.socialMedia?.facebook ?? undefined,
+        twitter: profile.socialMedia?.twitter ?? undefined,
+        linkedin: profile.socialMedia?.linkedin ?? undefined,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

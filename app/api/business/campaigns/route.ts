@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
           return { ...campaign, status: 'expired' };
         }
         return campaign;
-      });
+      }) || null;
     }
 
     // Transform snake_case keys to camelCase for frontend

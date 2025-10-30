@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 export interface User {
   id: string;
   email: string;
-  name: string;
+  name?: string;
   role: 'business' | 'influencer';
   businessId?: string;
   businessName?: string;
