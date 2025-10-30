@@ -3,10 +3,16 @@
 import Script from 'next/script';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { Slider } from '@/components/ui/slider';
+import { calculateCreditPricing } from '@/lib/stripe/config';
 
 export default function LandingPage() {
   const hasSelectedAudienceRef = useRef(false);
+  const [creditAmount, setCreditAmount] = useState(1000);
+
+  // Calculate pricing based on credit amount
+  const pricing = useMemo(() => calculateCreditPricing(creditAmount), [creditAmount]);
 
   useEffect(() => {
     // Setup navbar scroll effect
@@ -353,57 +359,75 @@ export default function LandingPage() {
             <section id="tokenomics" className="tokenomics-section">
               <div className="section-container">
                 <div className="section-header">
-                  <h2 className="section-title">Choose Your Token Pack</h2>
-                  <p className="section-subtitle">Power your campaigns with our flexible token system</p>
+                  <h2 className="section-title">Choose Your Credit Amount</h2>
+                  <p className="section-subtitle">Flexible pricing based on your needs - Buy any amount from 100 to 10,000 credits</p>
                 </div>
 
-                <div className="pricing-grid">
-                  <div className="pricing-card starter">
-                    <div className="card-header">
-                      <h3>Starter Pack</h3>
-                      <div className="price">
-                        <span className="currency">$</span>
-                        <span className="amount">99</span>
-                      </div>
-                      <div className="tokens">
-                        <span className="token-count">1,000</span>
-                        <span className="token-label">Tokens</span>
-                      </div>
-                    </div>
-                    <div className="card-features">
-                      <div className="feature-item">
-                        <span className="check">✓</span>
-                        <span>Up to 1,000 customer visits</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="check">✓</span>
-                        <span>Basic analytics dashboard</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="check">✓</span>
-                        <span>QR code generation</span>
-                      </div>
-                    </div>
-                    <button className="btn btn-card">Get Started</button>
-                  </div>
+                <div className="pricing-slider-container">
+                  <div className="pricing-card-slider">
+                    {/* Discount Badge */}
+                    {pricing.discount > 0 && (
+                      <div className="discount-badge">{pricing.tier.label}</div>
+                    )}
 
-                  <div className="pricing-card business popular">
-                    <div className="popular-badge">Most Popular</div>
-                    <div className="card-header">
-                      <h3>Business Pack</h3>
-                      <div className="price">
-                        <span className="currency">$</span>
-                        <span className="amount">299</span>
+                    {/* Credit Amount Display */}
+                    <div className="credit-amount-display">
+                      <div className="credit-count">
+                        {pricing.credits.toLocaleString()}
                       </div>
-                      <div className="tokens">
-                        <span className="token-count">3,500</span>
-                        <span className="token-label">Tokens</span>
+                      <div className="credit-label">Credits</div>
+                    </div>
+
+                    {/* Slider */}
+                    <div className="slider-wrapper">
+                      <Slider
+                        value={[creditAmount]}
+                        onValueChange={(value) => setCreditAmount(value[0])}
+                        min={100}
+                        max={10000}
+                        step={50}
+                        className="pricing-slider"
+                      />
+                      <div className="slider-labels">
+                        <span>100</span>
+                        <span>10,000</span>
                       </div>
                     </div>
+
+                    {/* Price Breakdown */}
+                    <div className="price-breakdown">
+                      <div className="breakdown-row">
+                        <span className="label">Credits:</span>
+                        <span className="value">{pricing.credits.toLocaleString()}</span>
+                      </div>
+                      <div className="breakdown-row">
+                        <span className="label">Price per credit:</span>
+                        <span className="value">${pricing.perCreditPrice.toFixed(2)}</span>
+                      </div>
+                      {pricing.discount > 0 && (
+                        <>
+                          <div className="breakdown-row base-price">
+                            <span className="label">Base price:</span>
+                            <span className="value strikethrough">${pricing.baselinePrice.toFixed(2)}</span>
+                          </div>
+                          <div className="breakdown-row savings">
+                            <span className="label">You save:</span>
+                            <span className="value savings-amount">${pricing.savings.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+                      <div className="breakdown-divider"></div>
+                      <div className="breakdown-row total">
+                        <span className="label">Total:</span>
+                        <span className="value total-price">${pricing.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Features */}
                     <div className="card-features">
                       <div className="feature-item">
                         <span className="check">✓</span>
-                        <span>Up to 3,500 customer visits</span>
+                        <span>All campaign types available</span>
                       </div>
                       <div className="feature-item">
                         <span className="check">✓</span>
@@ -411,39 +435,20 @@ export default function LandingPage() {
                       </div>
                       <div className="feature-item">
                         <span className="check">✓</span>
-                        <span>Multiple campaign types</span>
+                        <span>QR code generation</span>
+                      </div>
+                      <div className="feature-item">
+                        <span className="check">✓</span>
+                        <span>Unlimited campaigns</span>
                       </div>
                     </div>
-                    <button className="btn btn-card btn-primary">Choose Plan</button>
-                  </div>
 
-                  <div className="pricing-card enterprise">
-                    <div className="card-header">
-                      <h3>Enterprise Pack</h3>
-                      <div className="price">
-                        <span className="currency">$</span>
-                        <span className="amount">799</span>
-                      </div>
-                      <div className="tokens">
-                        <span className="token-count">10,000</span>
-                        <span className="token-label">Tokens</span>
-                      </div>
-                    </div>
-                    <div className="card-features">
-                      <div className="feature-item">
-                        <span className="check">✓</span>
-                        <span>Up to 10,000 customer visits</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="check">✓</span>
-                        <span>Premium analytics suite</span>
-                      </div>
-                      <div className="feature-item">
-                        <span className="check">✓</span>
-                        <span>API access & integrations</span>
-                      </div>
-                    </div>
-                    <button className="btn btn-card">Contact Sales</button>
+                    {/* CTA Button */}
+                    <Link href="/login">
+                      <button className="btn btn-card btn-primary">
+                        Get Started with {pricing.credits.toLocaleString()} Credits
+                      </button>
+                    </Link>
                   </div>
                 </div>
               </div>

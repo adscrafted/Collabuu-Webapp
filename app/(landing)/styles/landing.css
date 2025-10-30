@@ -1137,6 +1137,171 @@ body.scrolled-past-hero {
     color: var(--text-light-secondary);
 }
 
+/* Pricing Slider Container */
+.pricing-slider-container {
+    max-width: 700px;
+    margin: 0 auto 80px;
+}
+
+.pricing-card-slider {
+    background: var(--bg-light-card);
+    border: 1px solid var(--border-light);
+    border-radius: 24px;
+    padding: 48px;
+    position: relative;
+    box-shadow: var(--shadow-light);
+}
+
+.discount-badge {
+    position: absolute;
+    top: -12px;
+    right: 24px;
+    background: var(--accent-green-light);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(0, 179, 102, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 179, 102, 0.6);
+    }
+}
+
+.credit-amount-display {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.credit-count {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--accent-green-light);
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.credit-label {
+    font-size: 1.25rem;
+    color: var(--text-light-secondary);
+    font-weight: 500;
+}
+
+.slider-wrapper {
+    margin-bottom: 48px;
+}
+
+.pricing-slider {
+    margin-bottom: 12px;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--text-light-secondary);
+    padding: 0 4px;
+}
+
+.price-breakdown {
+    background: var(--bg-light-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.breakdown-row:last-child {
+    margin-bottom: 0;
+}
+
+.breakdown-row .label {
+    color: var(--text-light-secondary);
+    font-size: 0.95rem;
+}
+
+.breakdown-row .value {
+    color: var(--text-light-primary);
+    font-weight: 600;
+}
+
+.breakdown-row.base-price .value.strikethrough {
+    text-decoration: line-through;
+    color: var(--text-light-secondary);
+}
+
+.breakdown-row.savings .label {
+    color: var(--accent-green-light);
+    font-weight: 600;
+}
+
+.breakdown-row.savings .value.savings-amount {
+    color: var(--accent-green-light);
+    font-weight: 700;
+    animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.breakdown-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 16px 0;
+}
+
+.breakdown-row.total {
+    margin-top: 16px;
+}
+
+.breakdown-row.total .label {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-light-primary);
+}
+
+.breakdown-row.total .value.total-price {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--accent-green-light);
+}
+
+.pricing-card-slider .card-features {
+    margin-bottom: 32px;
+}
+
+.pricing-card-slider .btn-card {
+    font-size: 1rem;
+}
+
+/* Responsive adjustments for slider */
+@media (max-width: 768px) {
+    .pricing-slider-container {
+        max-width: 100%;
+    }
+
+    .pricing-card-slider {
+        padding: 32px 24px;
+    }
+
+    .credit-count {
+        font-size: 3rem;
+    }
+
+    .breakdown-row.total .value.total-price {
+        font-size: 1.5rem;
+    }
+}
+
 /* Download Section - Light Theme with gradient transition */
 .download-section {
     padding: 120px 0;
