@@ -246,15 +246,15 @@ export async function PUT(request: NextRequest) {
     });
 
     // CRITICAL: Ensure user_profiles entry exists BEFORE creating business_profiles
-    // The business_profiles table has a foreign key constraint on user_profiles
+    // The business_profiles table has a foreign key constraint on user_profiles(id)
     const { error: userProfileError } = await supabase
       .from('user_profiles')
       .upsert({
-        user_id: user.id,
+        id: user.id,
         email: user.email,
         updated_at: new Date().toISOString(),
       }, {
-        onConflict: 'user_id',
+        onConflict: 'id',
       });
 
     if (userProfileError) {
