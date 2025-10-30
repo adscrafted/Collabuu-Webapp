@@ -197,14 +197,26 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
+    // DEBUG: Log raw request body
+    console.log('Raw request body:', JSON.stringify(body, null, 2));
+
     // Support both camelCase (from web) and snake_case (from iOS) field names
-    const businessName = body.business_name || body.businessName;
+    const businessName = body.business_name || body.businessName || user.email?.split('@')[0] || 'Business';
     const streetAddress = body.street_address || body.streetAddress;
     const postalCode = body.postal_code || body.postalCode;
 
+    // Validate required fields
+    if (!businessName || businessName.trim() === '') {
+      console.error('Missing required field: business_name');
+      return NextResponse.json({
+        error: 'Business name is required',
+        receivedBody: body,
+      }, { status: 400 });
+    }
+
     // Only include fields that actually exist in the database schema
     const updateData: any = {
-      business_name: businessName,
+      business_name: businessName.trim(),
       phone_number: body.phone,  // Database uses phone_number, not phone
       website: body.website,
       street_address: streetAddress,
