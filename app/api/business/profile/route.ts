@@ -227,6 +227,13 @@ export async function PUT(request: NextRequest) {
     updateData.twitter_handle = body.twitter_handle || socialMedia.twitter || null;
     updateData.linkedin_company = body.linkedin_company || socialMedia.linkedin || null;
 
+    // DEBUG: Log what we're about to insert
+    console.log('Upserting business profile with data:', {
+      user_id: user.id,
+      updateData,
+      receivedBody: body,
+    });
+
     const { data: profile, error: profileError } = await supabase
       .from('business_profiles')
       .upsert({
