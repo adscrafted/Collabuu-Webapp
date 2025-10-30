@@ -1139,7 +1139,7 @@ body.scrolled-past-hero {
 
 /* Pricing Slider Container */
 .pricing-slider-container {
-    max-width: 700px;
+    max-width: 100%;
     margin: 0 auto 80px;
 }
 
@@ -1147,9 +1147,11 @@ body.scrolled-past-hero {
     background: var(--bg-light-card);
     border: 1px solid var(--border-light);
     border-radius: 24px;
-    padding: 48px;
+    padding: 32px 40px;
     position: relative;
     box-shadow: var(--shadow-light);
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .discount-badge {
@@ -1176,25 +1178,25 @@ body.scrolled-past-hero {
 
 .credit-amount-display {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 24px;
 }
 
 .credit-count {
-    font-size: 4rem;
+    font-size: 3rem;
     font-weight: 800;
     color: var(--accent-green-light);
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .credit-label {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--text-light-secondary);
     font-weight: 500;
 }
 
 .slider-wrapper {
-    margin-bottom: 48px;
+    margin-bottom: 32px;
 }
 
 .pricing-slider {
@@ -1212,15 +1214,15 @@ body.scrolled-past-hero {
 .price-breakdown {
     background: var(--bg-light-secondary);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 32px;
+    padding: 20px;
+    margin-bottom: 24px;
 }
 
 .breakdown-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .breakdown-row:last-child {
@@ -1270,13 +1272,17 @@ body.scrolled-past-hero {
 }
 
 .breakdown-row.total .value.total-price {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--accent-green-light);
 }
 
 .pricing-card-slider .card-features {
-    margin-bottom: 32px;
+    margin-bottom: 24px;
+}
+
+.pricing-card-slider .feature-item {
+    margin-bottom: 12px;
 }
 
 .pricing-card-slider .btn-card {
@@ -1290,15 +1296,28 @@ body.scrolled-past-hero {
     }
 
     .pricing-card-slider {
-        padding: 32px 24px;
+        padding: 24px 20px;
     }
 
     .credit-count {
-        font-size: 3rem;
+        font-size: 2.5rem;
     }
 
     .breakdown-row.total .value.total-price {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+    }
+
+    .credit-amount-display {
+        margin-bottom: 20px;
+    }
+
+    .slider-wrapper {
+        margin-bottom: 24px;
+    }
+
+    .price-breakdown {
+        padding: 16px;
+        margin-bottom: 20px;
     }
 }
 
