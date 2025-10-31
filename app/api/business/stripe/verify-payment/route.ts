@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       .insert({
         business_id: businessId,
         transaction_type: 'purchase',
-        amount: amount || 0, // Price paid in cents (e.g., 184800 = $1,848.00), defaults to 0 for backward compatibility
+        amount: amount ? amount / 100 : 0, // Convert cents to dollars (e.g., 57850 cents = $578.50), defaults to 0 for backward compatibility
         credits: credits, // CRITICAL: This is the actual number of credits purchased
         description: `Purchased ${credits.toLocaleString()} credits via Stripe`,
         status: 'completed',

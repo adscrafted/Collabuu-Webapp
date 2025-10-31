@@ -68,7 +68,7 @@ async function addCreditsToDatabase(
     .insert({
       business_id: businessId,
       transaction_type: 'purchase',
-      amount: amountInCents, // Price paid in cents (e.g., 184800 = $1,848.00)
+      amount: amountInCents / 100, // Convert cents to dollars (e.g., 57850 cents = $578.50)
       credits: parseInt(credits), // CRITICAL: This is the actual number of credits purchased
       description: `Purchased ${parseInt(credits).toLocaleString()} credits via Stripe`,
       status: 'completed',
