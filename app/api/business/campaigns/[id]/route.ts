@@ -306,6 +306,156 @@ export async function PUT(
       if (dateError) return dateError;
     }
 
+    // Check if totalCredits is being increased and validate sufficient credits
+    if (totalCredits !== undefined) {
+      // Fetch the current campaign to compare credit amounts
+      const { data: currentCampaign, error: fetchError } = await supabase
+        .from('campaigns')
+        .select('total_credits')
+        .eq('id', campaignId)
+        .eq('business_id', user.id)
+        .single();
+
+      if (fetchError || !currentCampaign) {
+        return createErrorResponse(
+          'Campaign not found',
+          404,
+          {
+            code: ErrorCodes.NOT_FOUND
+          }
+        );
+      }
+
+      const currentTotalCredits = currentCampaign.total_credits || 0;
+      const creditDifference = totalCredits - currentTotalCredits;
+
+      // If increasing the budget, check if user has sufficient credits
+      if (creditDifference > 0) {
+        // Calculate current credit balance (same logic as balance endpoint)
+        const allTransactions: any[] = [];
+
+        // 1. Fetch credit additions (purchases)
+        const { data: additions } = await supabase
+          .from('credit_transactions')
+          .select('*')
+          .eq('business_id', user.id)
+          .in('transaction_type', ['purchase'])
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false });
+
+        if (additions) {
+          additions.forEach((addition: any) => {
+            allTransactions.push({
+              amount: addition.credits ?? addition.amount,
+              created_at: addition.created_at,
+            });
+          });
+        }
+
+        // 2. Fetch existing campaigns to calculate deductions
+        const { data: existingCampaigns } = await supabase
+          .from('campaigns')
+          .select('id, total_credits, created_at')
+          .eq('business_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (existingCampaigns) {
+          for (const campaign of existingCampaigns) {
+            if (campaign.total_credits && campaign.total_credits > 0) {
+              allTransactions.push({
+                amount: -Math.abs(campaign.total_credits),
+                created_at: campaign.created_at,
+              });
+            }
+          }
+        }
+
+        // 3. Fetch refunds
+        const campaignIds = existingCampaigns ? existingCampaigns.map((c: any) => c.id) : [];
+        if (campaignIds.length > 0) {
+          const { data: refunds } = await supabase
+            .from('credit_transactions')
+            .select('*')
+            .eq('business_id', user.id)
+            .eq('transaction_type', 'refund')
+            .eq('related_table', 'campaigns')
+            .in('related_id', campaignIds)
+            .order('created_at', { ascending: false });
+
+          if (refunds) {
+            refunds.forEach((refund: any) => {
+              allTransactions.push({
+                amount: refund.amount,
+                created_at: refund.created_at,
+              });
+            });
+          }
+        }
+
+        // Calculate current balance
+        let currentBalance = 0;
+        allTransactions.forEach((transaction) => {
+          currentBalance += transaction.amount;
+        });
+
+        // Check if sufficient credits for the increase
+        if (currentBalance < creditDifference) {
+          return createErrorResponse(
+            `Insufficient credits to increase campaign budget. You have ${currentBalance} credits available but need ${creditDifference} additional credits.`,
+            400,
+            {
+              code: ErrorCodes.INSUFFICIENT_CREDITS,
+              details: {
+                required: creditDifference,
+                available: currentBalance,
+                shortage: creditDifference - currentBalance,
+                currentCampaignBudget: currentTotalCredits,
+                newCampaignBudget: totalCredits
+              }
+            }
+          );
+        }
+
+        // Create transaction record for the credit increase
+        const { error: transactionError } = await supabase
+          .from('credit_transactions')
+          .insert({
+            business_id: user.id,
+            transaction_type: 'campaign_create', // Using campaign_create for budget increases
+            amount: -Math.abs(creditDifference),
+            description: `Campaign budget increased: ${campaignId}`,
+            status: 'completed',
+            related_table: 'campaigns',
+            related_id: campaignId,
+            created_at: new Date().toISOString(),
+          });
+
+        if (transactionError) {
+          console.error('Error creating transaction record:', transactionError);
+          // Don't fail the operation, just log the error
+        }
+      } else if (creditDifference < 0) {
+        // Budget decreased - create refund transaction record
+        const { error: refundError } = await supabase
+          .from('credit_transactions')
+          .insert({
+            business_id: user.id,
+            transaction_type: 'refund',
+            amount: Math.abs(creditDifference), // Positive for refund
+            description: `Campaign budget decreased: ${campaignId}`,
+            status: 'completed',
+            related_table: 'campaigns',
+            related_id: campaignId,
+            created_at: new Date().toISOString(),
+          });
+
+        if (refundError) {
+          console.error('Error creating refund transaction record:', refundError);
+          // Don't fail the operation, just log the error
+        }
+      }
+    }
+
     // Build update object with proper field mapping
     const updateData: any = {
       updated_at: new Date().toISOString(),
