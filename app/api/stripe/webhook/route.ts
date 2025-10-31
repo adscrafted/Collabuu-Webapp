@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { verifyWebhookSignature } from '@/lib/stripe/server';
-import axios from 'axios';
+import { createClient } from '@supabase/supabase-js';
 
 // Disable body parsing for webhook signature verification
 export const dynamic = 'force-dynamic';
@@ -17,69 +17,86 @@ export const dynamic = 'force-dynamic';
 // Track processed payment intents to prevent duplicate processing
 const processedPayments = new Set<string>();
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
 /**
- * Call backend API to verify payment and add credits
+ * Add credits directly to database
  */
-async function verifyPaymentWithBackend(
+async function addCreditsToDatabase(
   sessionId: string,
   paymentIntentId: string,
   metadata: Stripe.Metadata
 ) {
-  // Validate backend URL is configured
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    throw new Error(
-      'NEXT_PUBLIC_API_URL is not configured. Cannot verify payment without backend API URL.'
-    );
+  const { userId, businessId, packageId, credits } = metadata;
+
+  console.log('Adding credits to database:', {
+    businessId,
+    credits,
+    paymentIntentId,
+  });
+
+  // Create Supabase client with service role key
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Check for duplicate payment using metadata->paymentIntentId (idempotency)
+  const { data: existingTransactions } = await supabase
+    .from('credit_transactions')
+    .select('id, metadata')
+    .eq('business_id', businessId)
+    .eq('transaction_type', 'purchase');
+
+  // Check if any transaction has this payment_intent_id in metadata
+  const duplicate = existingTransactions?.find(
+    (txn: any) => txn.metadata?.paymentIntentId === paymentIntentId
+  );
+
+  if (duplicate) {
+    console.log('Payment already processed:', paymentIntentId);
+    return {
+      success: true,
+      message: 'Payment already processed',
+      alreadyProcessed: true,
+    };
   }
 
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Verifying payment with backend');
-  }
-
-  try {
-    const response = await axios.post(
-      `${backendUrl}/api/business/stripe/verify-payment`,
-      {
-        sessionId,
-        paymentIntentId,
-        userId: metadata.userId,
-        businessId: metadata.businessId,
-        credits: parseInt(metadata.credits),
-        packageId: metadata.packageId,
+  // Insert credit transaction record
+  const { data: transaction, error: transactionError } = await supabase
+    .from('credit_transactions')
+    .insert({
+      business_id: businessId,
+      transaction_type: 'purchase',
+      amount: 0, // For purchases, amount field is not used for balance calculation
+      credits: parseInt(credits), // CRITICAL: This is the actual number of credits purchased
+      description: `Purchased ${parseInt(credits).toLocaleString()} credits via Stripe`,
+      status: 'completed',
+      related_table: null,
+      related_id: packageId,
+      metadata: {
+        source: 'stripe',
+        packageId: packageId,
+        sessionId: sessionId,
+        paymentIntentId: paymentIntentId,
       },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000, // 10 second timeout
-      }
-    );
+    })
+    .select()
+    .single();
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Backend verification successful');
-    }
-    return response.data;
-  } catch (error) {
-    console.error('Error verifying payment with backend');
-
-    if (axios.isAxiosError(error)) {
-      console.error('Backend error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        code: error.code,
-        message: error.message,
-      });
-
-      // Log connection errors separately
-      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        console.error('CRITICAL: Cannot connect to backend. Check NEXT_PUBLIC_API_URL configuration');
-      }
-    }
-
-    throw new Error('Failed to verify payment with backend');
+  if (transactionError) {
+    console.error('Error creating credit transaction:', transactionError);
+    throw new Error('Failed to add credits: ' + transactionError.message);
   }
+
+  console.log(`Successfully added ${credits} credits to user ${businessId}`);
+
+  return {
+    success: true,
+    message: 'Credits added successfully',
+    transaction: {
+      id: transaction.id,
+      credits: transaction.credits,
+    },
+  };
 }
 
 /**
@@ -135,12 +152,10 @@ async function handleCheckoutSessionCompleted(
     throw new Error('Incomplete metadata in checkout session');
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Processing payment');
-  }
+  console.log('Processing payment for user:', businessId);
 
-  // Verify payment with backend and add credits
-  const result = await verifyPaymentWithBackend(
+  // Add credits directly to database
+  const result = await addCreditsToDatabase(
     session.id,
     paymentIntentId,
     metadata
@@ -159,9 +174,7 @@ async function handleCheckoutSessionCompleted(
     );
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Payment processed successfully');
-  }
+  console.log('Payment processed successfully');
 
   return result;
 }
