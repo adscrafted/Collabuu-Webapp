@@ -405,13 +405,13 @@ export async function PUT(
             400,
             {
               code: ErrorCodes.INSUFFICIENT_CREDITS,
-              details: {
+              details: JSON.stringify({
                 required: creditDifference,
                 available: currentBalance,
                 shortage: creditDifference - currentBalance,
                 currentCampaignBudget: currentTotalCredits,
                 newCampaignBudget: totalCredits
-              }
+              })
             }
           );
         }

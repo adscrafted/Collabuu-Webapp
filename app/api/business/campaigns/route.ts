@@ -414,11 +414,11 @@ export async function POST(request: NextRequest) {
           400,
           {
             code: ErrorCodes.INSUFFICIENT_CREDITS,
-            details: {
+            details: JSON.stringify({
               required: totalCredits,
               available: currentBalance,
               shortage: totalCredits - currentBalance
-            }
+            })
           }
         );
       }
