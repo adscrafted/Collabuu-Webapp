@@ -338,6 +338,92 @@ export async function POST(request: NextRequest) {
     const dateError = validateCampaignDates(periodStart, periodEnd);
     if (dateError) return dateError;
 
+    // Check if user has sufficient credits before creating campaign
+    if (totalCredits > 0) {
+      // Calculate current credit balance (same logic as balance endpoint)
+      const allTransactions: any[] = [];
+
+      // 1. Fetch credit additions (purchases)
+      const { data: additions } = await supabase
+        .from('credit_transactions')
+        .select('*')
+        .eq('business_id', user.id)
+        .in('transaction_type', ['purchase'])
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false });
+
+      if (additions) {
+        additions.forEach((addition: any) => {
+          allTransactions.push({
+            amount: addition.credits ?? addition.amount,
+            created_at: addition.created_at,
+          });
+        });
+      }
+
+      // 2. Fetch existing campaigns to calculate deductions
+      const { data: existingCampaigns } = await supabase
+        .from('campaigns')
+        .select('id, total_credits, created_at')
+        .eq('business_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (existingCampaigns) {
+        for (const campaign of existingCampaigns) {
+          if (campaign.total_credits && campaign.total_credits > 0) {
+            allTransactions.push({
+              amount: -Math.abs(campaign.total_credits),
+              created_at: campaign.created_at,
+            });
+          }
+        }
+      }
+
+      // 3. Fetch refunds
+      const campaignIds = existingCampaigns ? existingCampaigns.map((c: any) => c.id) : [];
+      if (campaignIds.length > 0) {
+        const { data: refunds } = await supabase
+          .from('credit_transactions')
+          .select('*')
+          .eq('business_id', user.id)
+          .eq('transaction_type', 'refund')
+          .eq('related_table', 'campaigns')
+          .in('related_id', campaignIds)
+          .order('created_at', { ascending: false });
+
+        if (refunds) {
+          refunds.forEach((refund: any) => {
+            allTransactions.push({
+              amount: refund.amount,
+              created_at: refund.created_at,
+            });
+          });
+        }
+      }
+
+      // Calculate current balance
+      let currentBalance = 0;
+      allTransactions.forEach((transaction) => {
+        currentBalance += transaction.amount;
+      });
+
+      // Check if sufficient credits
+      if (currentBalance < totalCredits) {
+        return createErrorResponse(
+          `Insufficient credits. You have ${currentBalance} credits but need ${totalCredits} credits to create this campaign.`,
+          400,
+          {
+            code: ErrorCodes.INSUFFICIENT_CREDITS,
+            details: {
+              required: totalCredits,
+              available: currentBalance,
+              shortage: totalCredits - currentBalance
+            }
+          }
+        );
+      }
+    }
+
     // Sanitize string inputs
     const sanitizedTitle = sanitizeString(body.title, VALIDATION_CONSTRAINTS.STRING_LIMITS.title);
     const sanitizedDescription = sanitizeString(body.description, VALIDATION_CONSTRAINTS.STRING_LIMITS.description);
