@@ -247,6 +247,11 @@ export async function PUT(request: NextRequest) {
 
     // CRITICAL: Ensure user_profiles entry exists BEFORE creating business_profiles
     // The business_profiles table has a foreign key constraint on user_profiles(id)
+    // Get name from auth metadata (set during registration)
+    const firstName = user.user_metadata?.firstName || user.user_metadata?.first_name || null;
+    const lastName = user.user_metadata?.lastName || user.user_metadata?.last_name || null;
+    const fullName = firstName && lastName ? `${firstName} ${lastName}` : null;
+
     const { error: userProfileError } = await supabase
       .from('user_profiles')
       .upsert({
@@ -256,6 +261,9 @@ export async function PUT(request: NextRequest) {
         is_active: true,
         email_verified: false,
         onboarding_completed: false,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'id',
