@@ -252,6 +252,10 @@ export async function PUT(request: NextRequest) {
       .upsert({
         id: user.id,
         email: user.email,
+        user_type: 'business',
+        is_active: true,
+        email_verified: false,
+        onboarding_completed: false,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'id',
@@ -296,6 +300,14 @@ export async function PUT(request: NextRequest) {
         details: profileError.message
       }, { status: 500 });
     }
+
+    // Mark onboarding as completed in user_profiles
+    await supabase
+      .from('user_profiles')
+      .update({ onboarding_completed: true })
+      .eq('id', user.id);
+
+    console.log('Business profile created successfully, onboarding marked as complete');
 
     return NextResponse.json(profile);
   } catch (error) {
