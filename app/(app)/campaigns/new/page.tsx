@@ -129,6 +129,11 @@ export default function NewCampaignPage() {
 
   const isLoading = createCampaign.isPending;
 
+  // Check if user has insufficient credits (for step 2)
+  const totalCredits = form.watch('budget.totalCredits') || 0;
+  const availableCredits = creditBalance?.credits ?? 0;
+  const hasInsufficientCredits = currentStep === 2 && totalCredits > availableCredits;
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 py-8">
       {/* Scroll anchor */}
@@ -247,7 +252,11 @@ export default function NewCampaignPage() {
                 Cancel
               </Button>
               {currentStep < STEPS.length - 1 ? (
-                <Button type="button" onClick={handleNext} disabled={isLoading}>
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={isLoading || hasInsufficientCredits}
+                >
                   Continue
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
