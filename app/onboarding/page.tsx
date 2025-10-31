@@ -149,6 +149,14 @@ export default function OnboardingPage() {
       // Send notification that onboarding is completed (similar to iOS)
       localStorage.setItem('onboarding_completed', 'true')
 
+      // Set cookies for middleware authentication (7 days expiry)
+      const expiryDate = new Date()
+      expiryDate.setDate(expiryDate.getDate() + 7)
+      document.cookie = `auth_token=${session.access_token}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax`
+      if (user?.id) {
+        document.cookie = `business_id=${user.id}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax`
+      }
+
       // Redirect to campaigns dashboard
       router.push('/campaigns')
 
