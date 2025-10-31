@@ -19,13 +19,14 @@ interface VerifyPaymentRequest {
   businessId: string;
   credits: number;
   packageId: string;
+  amount?: number; // Optional: price paid in cents
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body: VerifyPaymentRequest = await request.json();
-    const { sessionId, paymentIntentId, userId, businessId, credits, packageId } = body;
+    const { sessionId, paymentIntentId, userId, businessId, credits, packageId, amount } = body;
 
     // Validate required fields
     if (!sessionId || !paymentIntentId || !userId || !businessId || !credits || !packageId) {
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
       .insert({
         business_id: businessId,
         transaction_type: 'purchase',
-        amount: 0, // For purchases, amount field is not used for balance calculation (credits field is used)
+        amount: amount || 0, // Price paid in cents (e.g., 184800 = $1,848.00), defaults to 0 for backward compatibility
         credits: credits, // CRITICAL: This is the actual number of credits purchased
         description: `Purchased ${credits.toLocaleString()} credits via Stripe`,
         status: 'completed',

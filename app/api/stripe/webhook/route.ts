@@ -26,13 +26,15 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 async function addCreditsToDatabase(
   sessionId: string,
   paymentIntentId: string,
-  metadata: Stripe.Metadata
+  metadata: Stripe.Metadata,
+  amountInCents: number
 ) {
   const { userId, businessId, packageId, credits } = metadata;
 
   console.log('Adding credits to database:', {
     businessId,
     credits,
+    amountInCents,
     paymentIntentId,
   });
 
@@ -66,7 +68,7 @@ async function addCreditsToDatabase(
     .insert({
       business_id: businessId,
       transaction_type: 'purchase',
-      amount: 0, // For purchases, amount field is not used for balance calculation
+      amount: amountInCents, // Price paid in cents (e.g., 184800 = $1,848.00)
       credits: parseInt(credits), // CRITICAL: This is the actual number of credits purchased
       description: `Purchased ${parseInt(credits).toLocaleString()} credits via Stripe`,
       status: 'completed',
@@ -154,11 +156,15 @@ async function handleCheckoutSessionCompleted(
 
   console.log('Processing payment for user:', businessId);
 
+  // Get the amount paid in cents from Stripe
+  const amountInCents = session.amount_total || 0;
+
   // Add credits directly to database
   const result = await addCreditsToDatabase(
     session.id,
     paymentIntentId,
-    metadata
+    metadata,
+    amountInCents
   );
 
   // Mark as processed
