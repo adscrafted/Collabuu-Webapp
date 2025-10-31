@@ -71,7 +71,7 @@ async function addCreditsToDatabase(
       description: `Purchased ${parseInt(credits).toLocaleString()} credits via Stripe`,
       status: 'completed',
       related_table: null,
-      related_id: packageId,
+      related_id: null, // Custom packages don't have UUIDs; store packageId in metadata instead
       metadata: {
         source: 'stripe',
         packageId: packageId,
