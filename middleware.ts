@@ -28,9 +28,19 @@ const adminLoginRoute = '/admin/login';
  * - Admin route protection with role verification
  * - Session validation via cookies
  * - Automatic redirects for unauthorized access
+ * - Domain canonicalization (non-www → www redirect)
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get('host') || '';
+
+  // DOMAIN REDIRECT: Redirect non-www to www
+  // Only in production (not localhost)
+  if (hostname === 'collabuu.com' && !hostname.includes('localhost')) {
+    const url = request.nextUrl.clone();
+    url.host = 'www.collabuu.com';
+    return NextResponse.redirect(url, 301); // Permanent redirect
+  }
 
   // Check if this is an admin route
   const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
