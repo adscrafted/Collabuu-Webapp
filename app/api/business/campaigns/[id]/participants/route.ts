@@ -78,65 +78,112 @@ export async function GET(
       );
     }
 
-    // For each participant, fetch their stats and social media
-    const participantsWithStats = await Promise.all(
-      (applications || []).map(async (app) => {
-        // Count unique customers from QR code redemptions (matching iOS implementation)
-        const { data: redemptions } = await supabase
-          .from('qr_code_redemptions')
-          .select('customer_id')
-          .eq('campaign_id', campaignId)
-          .eq('influencer_id', app.influencer_id)
-          .not('customer_id', 'is', null);
+    // PERFORMANCE OPTIMIZATION: Batch fetch all participant stats instead of N+1 queries
+    const influencerIds = (applications || []).map(app => app.influencer_id);
 
-        const customerCount = redemptions ? new Set(redemptions.map(r => r.customer_id)).size : 0;
-        // Visit count equals customer count (each unique customer is a visit)
-        const visitCount = customerCount;
+    // Batch fetch all data in parallel (3 queries instead of N*3)
+    const [redemptionsData, contentData, profilesData] = await Promise.all([
+      // Single query for all QR code redemptions
+      supabase
+        .from('qr_code_redemptions')
+        .select('influencer_id, customer_id')
+        .eq('campaign_id', campaignId)
+        .in('influencer_id', influencerIds)
+        .not('customer_id', 'is', null),
 
-        // Calculate credits earned based on customer count and campaign rate
-        const creditsPerVisit = campaign.credits_per_customer || campaign.credits_per_action || 0;
-        const creditsEarned = customerCount * creditsPerVisit;
+      // Single query for all content submissions
+      supabase
+        .from('content_submissions')
+        .select('influencer_id')
+        .eq('campaign_id', campaignId)
+        .in('influencer_id', influencerIds),
 
-        // Count content submissions
-        const { count: contentCount } = await supabase
-          .from('content_submissions')
-          .select('*', { count: 'exact', head: true })
-          .eq('campaign_id', campaignId)
-          .eq('influencer_id', app.influencer_id);
+      // Single query for all influencer profiles
+      supabase
+        .from('influencer_profiles')
+        .select('user_id, social_media_handles')
+        .in('user_id', influencerIds)
+    ]);
 
-        // Get social media handles from influencer_profiles table
-        const { data: influencerProfile } = await supabase
-          .from('influencer_profiles')
-          .select('social_media_handles')
-          .eq('user_id', app.influencer_id)
-          .single();
+    // Build lookup maps for O(1) access
+    const redemptionsByInfluencer = new Map();
+    const contentByInfluencer = new Map();
+    const profilesByInfluencer = new Map();
 
-        // Construct full name from first_name + last_name, fallback to full_name or username
-        const firstName = app.influencer?.first_name || '';
-        const lastName = app.influencer?.last_name || '';
-        const fullNameFromParts = `${firstName} ${lastName}`.trim();
-        const displayName = fullNameFromParts || app.influencer?.full_name || app.influencer?.username || null;
+    // Initialize maps
+    influencerIds.forEach(id => {
+      redemptionsByInfluencer.set(id, []);
+      contentByInfluencer.set(id, 0);
+    });
 
-        return {
-          id: app.id,
-          campaignId: app.campaign_id,
-          userId: app.influencer_id,
-          influencerId: app.influencer_id,
-          influencerName: displayName,
-          influencerUsername: app.influencer?.username,
-          influencerAvatar: app.influencer?.profile_image_url,
-          joinedAt: app.reviewed_at || app.applied_at,
-          visitsGenerated: visitCount || 0,
-          visitCount: visitCount || 0,
-          conversions: 0, // TODO: Calculate actual conversions when we have that data
-          creditsEarned: creditsEarned,
-          customerCount: customerCount,
-          totalContentSubmitted: contentCount || 0,
-          lastActivityAt: null, // TODO: Track last activity
-          socialMediaHandles: influencerProfile?.social_media_handles || undefined,
-        };
-      })
-    );
+    // Aggregate redemptions
+    if (redemptionsData.data) {
+      redemptionsData.data.forEach((redemption: any) => {
+        const redemptions = redemptionsByInfluencer.get(redemption.influencer_id) || [];
+        redemptions.push(redemption.customer_id);
+        redemptionsByInfluencer.set(redemption.influencer_id, redemptions);
+      });
+    }
+
+    // Count content submissions
+    if (contentData.data) {
+      contentData.data.forEach((content: any) => {
+        const count = contentByInfluencer.get(content.influencer_id) || 0;
+        contentByInfluencer.set(content.influencer_id, count + 1);
+      });
+    }
+
+    // Map profiles
+    if (profilesData.data) {
+      profilesData.data.forEach((profile: any) => {
+        profilesByInfluencer.set(profile.user_id, profile);
+      });
+    }
+
+    // Calculate campaign rate once
+    const creditsPerVisit = campaign.credits_per_customer || campaign.credits_per_action || 0;
+
+    // Map participants with pre-fetched stats (no database queries in loop)
+    const participantsWithStats = (applications || []).map((app) => {
+      // Get unique customer count from redemptions
+      const redemptions = redemptionsByInfluencer.get(app.influencer_id) || [];
+      const customerCount = new Set(redemptions).size;
+      const visitCount = customerCount;
+
+      // Calculate credits earned
+      const creditsEarned = customerCount * creditsPerVisit;
+
+      // Get content count
+      const contentCount = contentByInfluencer.get(app.influencer_id) || 0;
+
+      // Get profile
+      const influencerProfile = profilesByInfluencer.get(app.influencer_id);
+
+      // Construct full name from first_name + last_name, fallback to full_name or username
+      const firstName = app.influencer?.first_name || '';
+      const lastName = app.influencer?.last_name || '';
+      const fullNameFromParts = `${firstName} ${lastName}`.trim();
+      const displayName = fullNameFromParts || app.influencer?.full_name || app.influencer?.username || null;
+
+      return {
+        id: app.id,
+        campaignId: app.campaign_id,
+        userId: app.influencer_id,
+        influencerId: app.influencer_id,
+        influencerName: displayName,
+        influencerUsername: app.influencer?.username,
+        influencerAvatar: app.influencer?.profile_image_url,
+        joinedAt: app.reviewed_at || app.applied_at,
+        visitsGenerated: visitCount || 0,
+        visitCount: visitCount || 0,
+        conversions: 0, // TODO: Calculate actual conversions when we have that data
+        creditsEarned: creditsEarned,
+        customerCount: customerCount,
+        totalContentSubmitted: contentCount,
+        lastActivityAt: null, // TODO: Track last activity
+        socialMediaHandles: influencerProfile?.social_media_handles || undefined,
+      };
+    });
 
     return NextResponse.json(participantsWithStats);
   } catch (error) {

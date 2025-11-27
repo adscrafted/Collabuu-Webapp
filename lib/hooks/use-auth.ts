@@ -34,7 +34,8 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Session error:', error);
-        // Clear invalid session
+        // Clear invalid session and storage
+        supabase.auth.signOut({ scope: 'local' }); // Clear local storage
         logoutAction();
         return;
       }
@@ -63,15 +64,24 @@ export function useAuth() {
     });
 
     // Listen for auth changes
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Handle token refresh errors
       if (event === 'TOKEN_REFRESHED' && !session) {
         console.warn('Token refresh failed, clearing session');
+        await supabase.auth.signOut({ scope: 'local' });
         logoutAction();
         return;
       }
 
       if (event === 'SIGNED_OUT') {
+        logoutAction();
+        return;
+      }
+
+      // Handle SIGNED_IN event without session (shouldn't happen, but defensive)
+      if (event === 'SIGNED_IN' && !session) {
+        console.warn('SIGNED_IN event without session, clearing storage');
+        await supabase.auth.signOut({ scope: 'local' });
         logoutAction();
         return;
       }

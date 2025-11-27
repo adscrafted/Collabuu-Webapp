@@ -42,3 +42,17 @@ next-env.d.ts
 *.swp
 *.swo
 *~
+
+# Claude CLI
+.claude/
+
+# Supabase temp files
+supabase/.temp/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Development diagnostic scripts
+scripts/diagnose-*

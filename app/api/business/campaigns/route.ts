@@ -158,83 +158,93 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    // Fetch stats for each campaign
-    const campaignsWithStats = await Promise.all(
-      transformedCampaigns.map(async (campaign: any) => {
-        // Count accepted participants
-        const { count: participantsCount, error: participantsError } = await supabase
-          .from('campaign_applications')
-          .select('*', { count: 'exact', head: true })
-          .eq('campaign_id', campaign.id)
-          .eq('status', 'accepted');
+    // PERFORMANCE OPTIMIZATION: Batch fetch all stats instead of N+1 queries
+    // Batch fetch all applications data in parallel (2 queries instead of N*2)
+    const [applicationsData, contentSubmissionsData] = await Promise.all([
+      // Single query for all applications grouped by campaign
+      supabase
+        .from('campaign_applications')
+        .select('campaign_id, status')
+        .in('campaign_id', campaignIds),
 
-        if (participantsError) {
-          console.error('Error fetching participants for campaign', campaign.id, ':', participantsError);
-          // Don't fail, just set to 0
+      // Single query for all content submissions grouped by campaign
+      supabase
+        .from('content_submissions')
+        .select('campaign_id')
+        .in('campaign_id', campaignIds)
+    ]);
+
+    // Build lookup maps for O(1) access
+    const statsMap = new Map();
+
+    // Initialize all campaigns with zero stats
+    campaignIds.forEach((id: string) => {
+      statsMap.set(id, {
+        participantsCount: 0,
+        pendingCount: 0,
+        contentSubmissionsCount: 0
+      });
+    });
+
+    // Aggregate applications data
+    if (applicationsData.data) {
+      applicationsData.data.forEach((app: any) => {
+        const stats = statsMap.get(app.campaign_id);
+        if (stats) {
+          if (app.status === 'accepted') {
+            stats.participantsCount++;
+          } else if (app.status === 'pending') {
+            stats.pendingCount++;
+          }
         }
+      });
+    }
 
-        // Count pending applications
-        const { count: pendingCount, error: pendingError } = await supabase
-          .from('campaign_applications')
-          .select('*', { count: 'exact', head: true })
-          .eq('campaign_id', campaign.id)
-          .eq('status', 'pending');
-
-        if (pendingError) {
-          console.error('Error fetching pending applications for campaign', campaign.id, ':', pendingError);
-          // Don't fail, just set to 0
+    // Aggregate content submissions
+    if (contentSubmissionsData.data) {
+      contentSubmissionsData.data.forEach((submission: any) => {
+        const stats = statsMap.get(submission.campaign_id);
+        if (stats) {
+          stats.contentSubmissionsCount++;
         }
+      });
+    }
 
-        // Count accepted influencers (same as participants for now)
-        const acceptedInfluencersCount = participantsCount || 0;
+    // Map campaigns with pre-fetched stats (no database queries in loop)
+    const campaignsWithStats = transformedCampaigns.map((campaign: any) => {
+      const stats = statsMap.get(campaign.id) || { participantsCount: 0, pendingCount: 0, contentSubmissionsCount: 0 };
+      const visitorCounts = visitorCountsMap.get(campaign.id) || { influencer: 0, directApp: 0, total: 0 };
 
-        // Get visitor counts from map (calculated from QR code redemptions)
-        const visitorCounts = visitorCountsMap.get(campaign.id) || { influencer: 0, directApp: 0, total: 0 };
+      // Calculate credits spent
+      const creditsPerVisit = campaign.creditsPerCustomer || campaign.creditsPerAction || 0;
+      const creditsSpent = visitorCounts.total * creditsPerVisit;
 
-        // Calculate credits spent based on unique visitors and campaign rate
-        // For pay_per_customer: unique visitors × credits_per_customer
-        // For other types: can be extended based on campaign type
-        const creditsPerVisit = campaign.creditsPerCustomer || campaign.creditsPerAction || 0;
-        const creditsSpent = visitorCounts.total * creditsPerVisit;
-
-        // Count content submissions
-        const { count: contentSubmissionsCount, error: contentError } = await supabase
-          .from('content_submissions')
-          .select('*', { count: 'exact', head: true })
-          .eq('campaign_id', campaign.id);
-
-        if (contentError) {
-          console.error('Error fetching content submissions for campaign', campaign.id, ':', contentError);
-          // Don't fail, just set to 0
-        }
-
-        return {
-          ...campaign,
-          // iOS-compatible field mapping
-          type: campaign.campaignType,
-          periodStart: campaign.periodStart,
-          periodEnd: campaign.periodEnd,
-          visitCount: visitorCounts.total,
-          influencerVisitorCount: visitorCounts.influencer,
-          directAppVisitorCount: visitorCounts.directApp,
-          pendingApplicationsCount: pendingCount || 0,
-          // Flat budget fields (iOS structure)
-          totalCredits: campaign.totalCredits || 0,
-          creditsPerCustomer: campaign.creditsPerCustomer,
-          creditsPerAction: campaign.creditsPerAction,
-          influencerSpots: campaign.influencerSpots,
-          influencerSpotsFilled: campaign.influencerSpotsFilled || 0,
-          rewardValue: campaign.rewardValue,
-          stats: {
-            visitsCount: visitorCounts.total, // Use QR redemptions count, not visits table
-            participantsCount: participantsCount || 0,
-            creditsSpent,
-            acceptedInfluencersCount,
-            contentSubmissionsCount: contentSubmissionsCount || 0,
-          },
-        };
-      })
-    );
+      return {
+        ...campaign,
+        // iOS-compatible field mapping
+        type: campaign.campaignType,
+        periodStart: campaign.periodStart,
+        periodEnd: campaign.periodEnd,
+        visitCount: visitorCounts.total,
+        influencerVisitorCount: visitorCounts.influencer,
+        directAppVisitorCount: visitorCounts.directApp,
+        pendingApplicationsCount: stats.pendingCount,
+        // Flat budget fields (iOS structure)
+        totalCredits: campaign.totalCredits || 0,
+        creditsPerCustomer: campaign.creditsPerCustomer,
+        creditsPerAction: campaign.creditsPerAction,
+        influencerSpots: campaign.influencerSpots,
+        influencerSpotsFilled: campaign.influencerSpotsFilled || 0,
+        rewardValue: campaign.rewardValue,
+        stats: {
+          visitsCount: visitorCounts.total, // Use QR redemptions count, not visits table
+          participantsCount: stats.participantsCount,
+          creditsSpent,
+          acceptedInfluencersCount: stats.participantsCount,
+          contentSubmissionsCount: stats.contentSubmissionsCount,
+        },
+      };
+    });
 
     // Return campaigns array (webapp expects array, not wrapped object)
     return NextResponse.json(campaignsWithStats, {

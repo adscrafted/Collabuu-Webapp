@@ -14,9 +14,6 @@ import { createClient } from '@supabase/supabase-js';
 // Disable body parsing for webhook signature verification
 export const dynamic = 'force-dynamic';
 
-// Track processed payment intents to prevent duplicate processing
-const processedPayments = new Set<string>();
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -130,17 +127,6 @@ async function handleCheckoutSessionCompleted(
     throw new Error('Missing payment intent ID in checkout session');
   }
 
-  // Check for duplicate processing
-  if (processedPayments.has(paymentIntentId)) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Payment already processed, skipping');
-    }
-    return {
-      success: true,
-      message: 'Payment already processed',
-    };
-  }
-
   // Extract metadata
   const metadata = session.metadata;
 
@@ -166,9 +152,6 @@ async function handleCheckoutSessionCompleted(
     metadata,
     amountInCents
   );
-
-  // Mark as processed
-  processedPayments.add(paymentIntentId);
 
   // Send confirmation email
   if (session.customer_email) {
